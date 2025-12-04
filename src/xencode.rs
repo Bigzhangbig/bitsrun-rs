@@ -29,7 +29,7 @@ use base64::engine::GeneralPurposeConfig;
 const BASE64_ALPHABET: &str = "LVoJPiCN2R8G90yg+hmFHuacZ1OWMnrsSTXkYpUq/3dlbfKwv6xztjI7DeBE45QA";
 
 /// 将字节数组按 4 字节分块并转换为 u32 数组
-/// 
+///
 /// Convert byte array into u32 chunks (4 bytes per chunk)
 ///
 /// # Arguments
@@ -53,7 +53,7 @@ fn mix(buffer: &[u8], append_size: bool) -> Vec<u32> {
 }
 
 /// 将 u32 数组转换回字节数组
-/// 
+///
 /// Convert u32 array back to byte array
 ///
 /// # Arguments
@@ -77,7 +77,7 @@ fn splite(buffer: Vec<u32>, include_size: bool) -> Vec<u8> {
 }
 
 /// 使用 XXTEA 算法加密消息
-/// 
+///
 /// Encrypt message using XXTEA algorithm
 ///
 /// # Arguments
@@ -116,7 +116,7 @@ pub fn xencode(msg: &str, key: &str) -> Vec<u8> {
 }
 
 /// 使用自定义字母表进行 Base64 编码
-/// 
+///
 /// Perform Base64 encoding with custom alphabet
 ///
 /// # Arguments

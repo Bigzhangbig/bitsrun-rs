@@ -17,14 +17,9 @@
 use crate::client::SrunClient;
 use crate::config;
 
-use std::fs;
-
-use anyhow::Context;
 use anyhow::Result;
 use log::info;
 use log::warn;
-use owo_colors::OwoColorize;
-use owo_colors::Stream::Stdout;
 
 use reqwest::Client;
 use serde::Deserialize;
@@ -43,25 +38,9 @@ pub struct SrunDaemon {
 
 impl SrunDaemon {
     pub fn new(config_path: Option<String>) -> Result<SrunDaemon> {
-        let finalized_cfg = config::validate_config_file(&config_path)?;
-
         // in daemon mode, bitsrun must be able to read all required fields from the config file,
         // including `username`, `password`, and `dm`.
-        let daemon_cfg_str = fs::read_to_string(&finalized_cfg).with_context(|| {
-            format!(
-                "failed to read config file `{}`",
-                &finalized_cfg.if_supports_color(Stdout, |t| t.underline())
-            )
-        })?;
-        let daemon_cfg =
-            serde_json::from_str::<SrunDaemon>(&daemon_cfg_str).with_context(|| {
-                format!(
-                    "failed to parse config file `{}`",
-                    &finalized_cfg.if_supports_color(Stdout, |t| t.underline())
-                )
-            })?;
-
-        Ok(daemon_cfg)
+        config::read_config_file::<SrunDaemon>(&config_path)
     }
 
     pub async fn start(&self, http_client: Client) -> Result<()> {
