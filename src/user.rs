@@ -16,8 +16,6 @@
 
 use crate::config;
 
-use std::fs;
-
 use anyhow::Context;
 use anyhow::Result;
 use owo_colors::OwoColorize;
@@ -53,22 +51,7 @@ impl BitUserPartial {
 
 /// Parse bit user credentials from config file
 fn parse_bit_user_config(config_path: &Option<String>) -> Result<BitUserPartial> {
-    let config = config::validate_config_file(config_path)?;
-
-    let user_str_from_file = fs::read_to_string(&config).with_context(|| {
-        format!(
-            "failed to read config file `{}`",
-            &config.if_supports_color(Stdout, |t| t.underline())
-        )
-    })?;
-    let user_from_file =
-        serde_json::from_str::<BitUserPartial>(&user_str_from_file).with_context(|| {
-            format!(
-                "failed to parse config file `{}`",
-                &config.if_supports_color(Stdout, |t| t.underline())
-            )
-        })?;
-    Ok(user_from_file)
+    config::read_config_file::<BitUserPartial>(config_path)
 }
 
 /// Get campus network user credentials from command line arguments or config file
@@ -77,9 +60,9 @@ fn parse_bit_user_config(config_path: &Option<String>) -> Result<BitUserPartial>
 /// In this case, `require_password` should be set to `false`.
 ///
 /// 从命令行参数或配置文件获取校园网用户凭据
-/// 
+///
 /// 注意：登出时不需要密码，此时应将 `require_password` 设置为 `false`
-/// 
+///
 /// 凭据优先级：命令行参数 > 配置文件 > 交互式提示
 /// Priority: command-line arguments > config file > interactive prompts
 pub fn finalize_bit_user(

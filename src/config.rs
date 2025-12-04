@@ -16,6 +16,7 @@ use std::env;
 use std::fs;
 
 use anyhow::anyhow;
+use anyhow::Context;
 use anyhow::Error;
 use anyhow::Result;
 use owo_colors::OwoColorize;
@@ -130,4 +131,28 @@ pub fn validate_config_file(config_path: &Option<String>) -> Result<String, Erro
         ));
     }
     Ok(validated_config_path)
+}
+
+/// Helper function to read and parse a config file into a type T
+///
+/// This combines config validation, file reading, and JSON parsing with proper error handling
+pub fn read_config_file<T>(config_path: &Option<String>) -> Result<T>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let validated_config = validate_config_file(config_path)?;
+
+    let config_str = fs::read_to_string(&validated_config).with_context(|| {
+        format!(
+            "failed to read config file `{}`",
+            &validated_config.if_supports_color(Stdout, |t| t.underline())
+        )
+    })?;
+
+    serde_json::from_str::<T>(&config_str).with_context(|| {
+        format!(
+            "failed to parse config file `{}`",
+            &validated_config.if_supports_color(Stdout, |t| t.underline())
+        )
+    })
 }
