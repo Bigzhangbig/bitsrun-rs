@@ -147,15 +147,70 @@ $ chmod 600 <path/to/bit-user.json>
 
 Windows users can run bitsrun as a system service for automatic startup at boot and keeping the session alive in the background.
 
-### Prerequisites
+### Method 1: Native Windows Service (Recommended)
+
+Starting from version 0.5.0, bitsrun has native Windows service support using the `windows-service` crate. This is the recommended method as it provides better integration with Windows Service Control Manager (SCM).
+
+#### Prerequisites
 
 1. Download the Windows version of bitsrun executable from [Releases](https://github.com/spencerwooo/bitsrun-rs/releases/latest)
 2. Place the executable in a permanent location (e.g., `C:\Program Files\bitsrun\bitsrun.exe`)
 3. Create a config file `bit-user.json` and place it in an appropriate location (e.g., `C:\Program Files\bitsrun\bit-user.json`)
 
-### Install Service Using NSSM (Recommended)
+#### Installation Steps
 
-NSSM (Non-Sucking Service Manager) is an easy-to-use Windows service management tool.
+1. Open Command Prompt or PowerShell as Administrator
+
+2. Install the service using the built-in `sc` command:
+
+```powershell
+# Navigate to bitsrun directory
+cd "C:\Program Files\bitsrun"
+
+# Install service using native Windows service mode
+sc create bitsrun binPath= "C:\Program Files\bitsrun\bitsrun.exe windows-service" start= auto
+sc description bitsrun "BIT Campus Network Auto Login Service"
+```
+
+3. Start the service:
+
+```powershell
+sc start bitsrun
+```
+
+#### Service Management
+
+```powershell
+# Check service status
+sc query bitsrun
+
+# Stop service
+sc stop bitsrun
+
+# Restart service
+sc stop bitsrun
+sc start bitsrun
+
+# Remove service
+sc delete bitsrun
+```
+
+> [!NOTE]
+> The native Windows service mode uses the `windows-service` command which integrates directly with Windows Service Control Manager (SCM). The service will automatically read configuration from default config paths or you can place `bit-user.json` in the same directory as the executable.
+
+### Method 2: Using NSSM (Alternative)
+
+NSSM (Non-Sucking Service Manager) is an easy-to-use Windows service management tool that can be used as an alternative method.
+
+### Method 2: Using NSSM (Alternative)
+
+NSSM (Non-Sucking Service Manager) is an easy-to-use Windows service management tool that can be used as an alternative method.
+
+#### Prerequisites
+
+Same as Method 1 above.
+
+#### Installation Steps
 
 1. Download [NSSM](https://nssm.cc/download)
 2. Open Command Prompt or PowerShell as Administrator
@@ -183,9 +238,26 @@ cd C:\path\to\nssm\win64
 .\nssm.exe start bitsrun
 ```
 
-### Install Service Using sc Command
+#### Service Management Commands
 
-You can also use Windows built-in `sc` command to create a service:
+```powershell
+# Start service
+nssm start bitsrun
+
+# Stop service
+nssm stop bitsrun
+
+# Remove service
+nssm remove bitsrun confirm
+```
+
+### Method 3: Using sc Command with keep-alive (Legacy)
+
+You can also use Windows built-in `sc` command to create a service with the `keep-alive` subcommand:
+
+### Method 3: Using sc Command with keep-alive (Legacy)
+
+You can also use Windows built-in `sc` command to create a service with the `keep-alive` subcommand:
 
 ```powershell
 # Run as Administrator
@@ -194,32 +266,19 @@ sc description bitsrun "BIT Campus Network Auto Login Service"
 sc start bitsrun
 ```
 
-### Service Management Commands
+> [!NOTE]
+> This method runs bitsrun in keep-alive mode but doesn't use native Windows service integration. Method 1 (Native Windows Service) is recommended for better integration with Windows SCM.
 
-```powershell
-# Start service
-sc start bitsrun
-# Or using NSSM
-nssm start bitsrun
+### Additional Notes
+### Additional Notes
 
-# Stop service
-sc stop bitsrun
-# Or using NSSM
-nssm stop bitsrun
-
-# Remove service
-sc delete bitsrun
-# Or using NSSM
-nssm remove bitsrun confirm
-```
-
-### Check Service Status
-
-Use Windows Service Manager (`services.msc`) or command line:
+You can check the service status using Windows Service Manager (`services.msc`) or command line:
 
 ```powershell
 sc query bitsrun
 ```
+
+You can also view service logs in Windows Event Viewer under "Windows Logs" > "Application" for troubleshooting.
 
 > [!IMPORTANT]
 > Ensure that the config file `bit-user.json` contains the correct username and password, and use absolute paths. On Windows, there is no need to set file permissions to 600.
