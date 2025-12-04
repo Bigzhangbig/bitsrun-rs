@@ -7,6 +7,8 @@
 
 🌐 A headless login and logout CLI for gateway (10.0.0.55) at BIT, now in Rust.
 
+English | [简体中文](README_CN.md)
+
 ![CleanShot 2023-12-04 at 16 47 26@2x](https://github.com/spencerwooo/bitsrun-rs/assets/32114380/23343ba1-961c-41aa-b4b6-c09da93fb699)
 
 ## Install
@@ -34,6 +36,10 @@
 - Download the latest binary from [Releases](https://github.com/spencerwooo/bitsrun-rs/releases/latest).
 - Uncompress file: `tar -xvf <file>.tar.gz`
 - Move binary to `$PATH`, such as: `mv <file>/bitsrun ~/.local/bin/`
+
+#### Windows Service
+
+Windows users can run bitsrun as a Windows service for automatic login at startup and keeping the session alive. See [Windows Service Installation](#windows-service-installation) for detailed instructions.
 
 ## Usage
 
@@ -136,6 +142,87 @@ bitsrun: list of possible config paths
 ```console
 $ chmod 600 <path/to/bit-user.json>
 ```
+
+## Windows Service Installation
+
+Windows users can run bitsrun as a system service for automatic startup at boot and keeping the session alive in the background.
+
+### Prerequisites
+
+1. Download the Windows version of bitsrun executable from [Releases](https://github.com/spencerwooo/bitsrun-rs/releases/latest)
+2. Place the executable in a permanent location (e.g., `C:\Program Files\bitsrun\bitsrun.exe`)
+3. Create a config file `bit-user.json` and place it in an appropriate location (e.g., `C:\Program Files\bitsrun\bit-user.json`)
+
+### Install Service Using NSSM (Recommended)
+
+NSSM (Non-Sucking Service Manager) is an easy-to-use Windows service management tool.
+
+1. Download [NSSM](https://nssm.cc/download)
+2. Open Command Prompt or PowerShell as Administrator
+3. Run the following command to install the service:
+
+```powershell
+# Navigate to NSSM directory
+cd C:\path\to\nssm\win64
+
+# Install service (will open GUI configuration interface)
+.\nssm.exe install bitsrun
+```
+
+4. Configure in NSSM GUI:
+   - **Path**: `C:\Program Files\bitsrun\bitsrun.exe`
+   - **Startup directory**: `C:\Program Files\bitsrun`
+   - **Arguments**: `keep-alive --config C:\Program Files\bitsrun\bit-user.json`
+   - **Service name**: `bitsrun`
+
+5. Click "Install service" button
+
+6. Start the service:
+
+```powershell
+.\nssm.exe start bitsrun
+```
+
+### Install Service Using sc Command
+
+You can also use Windows built-in `sc` command to create a service:
+
+```powershell
+# Run as Administrator
+sc create bitsrun binPath= "C:\Program Files\bitsrun\bitsrun.exe keep-alive --config C:\Program Files\bitsrun\bit-user.json" start= auto
+sc description bitsrun "BIT Campus Network Auto Login Service"
+sc start bitsrun
+```
+
+### Service Management Commands
+
+```powershell
+# Start service
+sc start bitsrun
+# Or using NSSM
+nssm start bitsrun
+
+# Stop service
+sc stop bitsrun
+# Or using NSSM
+nssm stop bitsrun
+
+# Remove service
+sc delete bitsrun
+# Or using NSSM
+nssm remove bitsrun confirm
+```
+
+### Check Service Status
+
+Use Windows Service Manager (`services.msc`) or command line:
+
+```powershell
+sc query bitsrun
+```
+
+> [!IMPORTANT]
+> Ensure that the config file `bit-user.json` contains the correct username and password, and use absolute paths. On Windows, there is no need to set file permissions to 600.
 
 ## Project Structure
 
