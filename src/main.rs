@@ -22,6 +22,9 @@ mod tables;
 mod user;
 mod xencode;
 
+#[cfg(windows)]
+mod windows_service;
+
 use anyhow::Context;
 use anyhow::Result;
 use clap::Parser;
@@ -111,6 +114,14 @@ async fn cli() -> Result<()> {
             let config_path = daemon_args.config.to_owned();
             let daemon = SrunDaemon::new(config_path)?;
             daemon.start(http_client).await?;
+        }
+
+        #[cfg(windows)]
+        Some(Commands::WindowsService) => {
+            // 运行 Windows 服务
+            // Run Windows service
+            windows_service::run_windows_service()
+                .map_err(|e| anyhow::anyhow!("Windows service error: {}", e))?;
         }
 
         Some(Commands::ConfigPaths) => print_config_paths(),
