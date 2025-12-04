@@ -151,7 +151,24 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
 
     // 创建 tokio 运行时以运行异步代码
     // Create tokio runtime to run async code
-    let runtime = tokio::runtime::Runtime::new().unwrap();
+    let runtime = match tokio::runtime::Runtime::new() {
+        Ok(rt) => rt,
+        Err(e) => {
+            error!("Failed to create tokio runtime: {}", e);
+            // 通知 SCM 服务启动失败
+            // Notify SCM that service start failed
+            status_handle.set_service_status(ServiceStatus {
+                service_type: SERVICE_TYPE,
+                current_state: ServiceState::Stopped,
+                controls_accepted: ServiceControlAccept::empty(),
+                exit_code: ServiceExitCode::ServiceSpecific(2),
+                checkpoint: 0,
+                wait_hint: Duration::default(),
+                process_id: None,
+            })?;
+            return Ok(());
+        }
+    };
 
     // 在主循环中运行业务逻辑
     // Run business logic in the main loop
@@ -163,11 +180,11 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
         let shutdown_future = async {
             // 在异步任务中等待停止信号
             // Wait for stop signal in async task
-            tokio::task::spawn_blocking(move || {
-                shutdown_rx.recv().ok();
-            })
-            .await
-            .ok();
+            match tokio::task::spawn_blocking(move || shutdown_rx.recv()).await {
+                Ok(Ok(())) => info!("Received shutdown signal"),
+                Ok(Err(e)) => error!("Error receiving shutdown signal: {}", e),
+                Err(e) => error!("Task join error: {}", e),
+            }
         };
 
         // 创建守护进程任务
@@ -176,7 +193,9 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
 
         // 等待守护进程完成或收到停止信号
         // Wait for daemon to complete or receive stop signal
-        daemon_future.await.ok();
+        if let Err(e) = daemon_future.await {
+            error!("Daemon error: {}", e);
+        }
     });
 
     info!("Service stopping");

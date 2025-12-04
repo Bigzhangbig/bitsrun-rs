@@ -202,10 +202,6 @@ sc delete bitsrun
 
 NSSM (Non-Sucking Service Manager) is an easy-to-use Windows service management tool that can be used as an alternative method.
 
-### Method 2: Using NSSM (Alternative)
-
-NSSM (Non-Sucking Service Manager) is an easy-to-use Windows service management tool that can be used as an alternative method.
-
 #### Prerequisites
 
 Same as Method 1 above.
@@ -255,10 +251,6 @@ nssm remove bitsrun confirm
 
 You can also use Windows built-in `sc` command to create a service with the `keep-alive` subcommand:
 
-### Method 3: Using sc Command with keep-alive (Legacy)
-
-You can also use Windows built-in `sc` command to create a service with the `keep-alive` subcommand:
-
 ```powershell
 # Run as Administrator
 sc create bitsrun binPath= "C:\Program Files\bitsrun\bitsrun.exe keep-alive --config C:\Program Files\bitsrun\bit-user.json" start= auto
@@ -269,7 +261,6 @@ sc start bitsrun
 > [!NOTE]
 > This method runs bitsrun in keep-alive mode but doesn't use native Windows service integration. Method 1 (Native Windows Service) is recommended for better integration with Windows SCM.
 
-### Additional Notes
 ### Additional Notes
 
 You can check the service status using Windows Service Manager (`services.msc`) or command line:

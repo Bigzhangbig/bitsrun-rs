@@ -43,12 +43,18 @@ impl SrunDaemon {
         config::read_config_file::<SrunDaemon>(&config_path)
     }
 
-    pub async fn start(&self, http_client: Client) -> Result<()> {
-        // 默认将日志级别设置为 INFO
-        // Set logger to INFO level by default
+    /// 初始化日志记录器
+    /// Initialize logger
+    fn init_logger() {
         pretty_env_logger::formatted_builder()
             .filter_level(log::LevelFilter::Info)
             .init();
+    }
+
+    pub async fn start(&self, http_client: Client) -> Result<()> {
+        // 默认将日志级别设置为 INFO
+        // Set logger to INFO level by default
+        Self::init_logger();
 
         // 默认每小时轮询一次
         // Set default polling interval to every 1 hour
@@ -122,9 +128,7 @@ impl SrunDaemon {
     {
         // 默认将日志级别设置为 INFO
         // Set logger to INFO level by default
-        pretty_env_logger::formatted_builder()
-            .filter_level(log::LevelFilter::Info)
-            .init();
+        Self::init_logger();
 
         // 默认每小时轮询一次
         // Set default polling interval to every 1 hour
