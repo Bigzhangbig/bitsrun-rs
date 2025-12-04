@@ -1,3 +1,31 @@
+//! SRUN 客户端核心实现模块
+//!
+//! 本模块实现了与 SRUN 校园网认证系统的通信协议，包括：
+//! - 登录状态查询
+//! - 用户登录和登出操作
+//! - ac_id 获取和 challenge 请求
+//! - 加密参数构造和校验和计算
+//!
+//! 定义了主要结构体：
+//! - `SrunClient`: SRUN 客户端，封装所有认证操作
+//! - `SrunLoginState`: 登录状态响应结构
+//! - `SrunPortalResponse`: 登录/登出响应结构
+//! - `SrunChallenge`: Challenge 请求响应结构
+//!
+//! SRUN Client Core Implementation Module
+//!
+//! This module implements the communication protocol with the SRUN campus network authentication system:
+//! - Login status queries
+//! - User login and logout operations
+//! - ac_id retrieval and challenge requests
+//! - Encrypted parameter construction and checksum calculation
+//!
+//! Main structures:
+//! - `SrunClient`: SRUN client that encapsulates all authentication operations
+//! - `SrunLoginState`: Login state response structure
+//! - `SrunPortalResponse`: Login/logout response structure
+//! - `SrunChallenge`: Challenge request response structure
+
 use std::net::IpAddr;
 
 use crate::xencode::fkbase64;
@@ -249,7 +277,8 @@ impl SrunClient {
 
     /// Login to the SRUN portal
     pub async fn login(&self, force: bool, verbose: bool) -> Result<SrunPortalResponse> {
-        // check if already logged in
+        // 检查是否已经登录
+        // Check if already logged in
         if (self.login_state.error == "ok") & !force {
             bail!(
                 "{} already logged in",
@@ -260,7 +289,8 @@ impl SrunClient {
             )
         }
 
-        // construct checksum and crypto encodings
+        // 获取 challenge token 并构造加密参数
+        // Get challenge token and construct encrypted parameters
         let token = self.get_challenge(verbose).await?;
 
         let chksum_data = json!({
@@ -271,14 +301,19 @@ impl SrunClient {
             "enc_ver": String::from("srun_bx1"),
         });
 
+        // 使用 xencode 加密认证数据
+        // Encrypt authentication data using xencode
         let json_chksum_data = serde_json::to_string(&chksum_data)?;
         let encoded_data = xencode(json_chksum_data.as_str(), token.as_str());
         let info = format!("{}{}", "{SRBX1}", fkbase64(encoded_data));
 
-        // construct param payload
+        // 构造请求参数
+        // Construct request parameters
         let mac = Hmac::<Md5>::new_from_slice(token.as_bytes())?;
         let hmd5 = format!("{:x}", mac.finalize().into_bytes());
 
+        // 计算校验和
+        // Calculate checksum
         let chksum = {
             let chk = format!(
                 "{0}{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}{0}{7}",
@@ -333,7 +368,8 @@ impl SrunClient {
 
     /// Logout of the SRUN portal
     pub async fn logout(&self, force: bool, verbose: bool) -> Result<SrunPortalResponse> {
-        // check if already logged out
+        // 检查是否已经登出
+        // Check if already logged out
         if (self.login_state.error == "not_online_error") & !force {
             bail!(
                 "{} already logged out",
@@ -343,7 +379,8 @@ impl SrunClient {
             )
         }
 
-        // check if username match
+        // 检查用户名是否匹配
+        // Check if username matches
         let logged_in_username = self.login_state.user_name.clone().unwrap_or_default();
         if logged_in_username != self.username {
             println!(
@@ -354,7 +391,8 @@ impl SrunClient {
             );
         }
 
-        // check if ip match
+        // 检查 IP 是否匹配
+        // Check if IP matches
         let logged_in_ip = self.login_state.online_ip;
         if logged_in_ip != self.ip {
             println!(
@@ -369,9 +407,11 @@ impl SrunClient {
             );
         }
 
-        // perform logout action
+        // 执行登出操作
+        // Perform logout action
         let url = {
-            // dumb terminals use a different endpoint (dm logout)
+            // 哑终端使用不同的端点 (dm logout)
+            // Dumb terminals use a different endpoint (dm logout)
             match self.dm {
                 true => format!("{}/cgi-bin/rad_user_dm", SRUN_PORTAL),
                 false => format!("{}/cgi-bin/srun_portal", SRUN_PORTAL),

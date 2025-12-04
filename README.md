@@ -137,6 +137,21 @@ bitsrun: list of possible config paths
 $ chmod 600 <path/to/bit-user.json>
 ```
 
+## Project Structure
+
+This project consists of the following main source files:
+
+| File | Purpose |
+|------|---------|
+| `src/main.rs` | Entry point of the application, handles command-line interface initialization and orchestrates the execution flow |
+| `src/cli.rs` | Defines command-line arguments, subcommands, and their configurations using clap |
+| `src/client.rs` | Core SRUN client implementation with login/logout logic and portal communication |
+| `src/config.rs` | Configuration file handling, including path enumeration and validation |
+| `src/daemon.rs` | Daemon mode implementation for keeping sessions alive with periodic login requests |
+| `src/tables.rs` | Pretty-printing utilities for displaying status tables and configuration paths |
+| `src/user.rs` | User credential management from config files or interactive prompts |
+| `src/xencode.rs` | Encryption algorithm implementation for SRUN portal authentication |
+
 ## Related
 
 - [`zu1k/srun`](https://github.com/zu1k/srun) - Srun authentication system login tools. (Rust)
