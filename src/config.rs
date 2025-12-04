@@ -1,3 +1,17 @@
+//! 配置文件管理模块
+//!
+//! 本模块处理配置文件的查找、验证和权限检查：
+//! - 枚举平台特定的配置文件路径（Windows、Linux、macOS）
+//! - 验证配置文件的存在性和可读性
+//! - 检查配置文件权限（Unix 系统需要 600 权限）
+//!
+//! Configuration File Management Module
+//!
+//! This module handles configuration file discovery, validation, and permission checks:
+//! - Enumerates platform-specific config file paths (Windows, Linux, macOS)
+//! - Validates config file existence and readability
+//! - Checks config file permissions (Unix systems require 600 permissions)
+
 use std::env;
 use std::fs;
 
