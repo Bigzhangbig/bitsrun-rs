@@ -147,17 +147,15 @@ $ chmod 600 <path/to/bit-user.json>
 
 Windows 用户可以将 bitsrun 作为系统服务运行，以实现开机自动启动和后台保持在线。
 
-### 方法一：原生 Windows 服务（推荐）
+从 0.5.0 版本开始，bitsrun 支持使用 `windows-service` crate 实现的原生 Windows 服务，能够与 Windows 服务控制管理器 (SCM) 进行完整集成。
 
-从 0.5.0 版本开始，bitsrun 支持使用 `windows-service` crate 实现的原生 Windows 服务。这是推荐的方法，因为它能更好地与 Windows 服务控制管理器 (SCM) 集成。
-
-#### 前提条件
+### 前提条件
 
 1. 从 [Releases](https://github.com/spencerwooo/bitsrun-rs/releases/latest) 下载 Windows 版本的 bitsrun 可执行文件
 2. 将可执行文件放置在一个永久位置（例如 `C:\Program Files\bitsrun\bitsrun.exe`）
 3. 创建配置文件 `bit-user.json` 并放置在合适的位置（例如 `C:\Program Files\bitsrun\bit-user.json`）
 
-#### 安装步骤
+### 安装步骤
 
 1. 以管理员身份打开命令提示符或 PowerShell
 
@@ -178,7 +176,7 @@ sc description bitsrun "BIT Campus Network Auto Login Service"
 sc start bitsrun
 ```
 
-#### 服务管理
+### 服务管理
 
 ```powershell
 # 查看服务状态
@@ -197,69 +195,6 @@ sc delete bitsrun
 
 > [!NOTE]
 > 原生 Windows 服务模式使用 `windows-service` 命令，可直接与 Windows 服务控制管理器 (SCM) 集成。服务会自动从默认配置路径读取配置，或者您可以将 `bit-user.json` 放在可执行文件的同一目录中。
-
-### 方法二：使用 NSSM（备选方案）
-
-NSSM（Non-Sucking Service Manager）是一个简单易用的 Windows 服务管理工具，可作为备选方法使用。
-
-#### 前提条件
-
-与方法一相同。
-
-#### 安装步骤
-
-1. 下载 [NSSM](https://nssm.cc/download)
-2. 以管理员身份打开命令提示符或 PowerShell
-3. 运行以下命令安装服务：
-
-```powershell
-# 进入 NSSM 所在目录
-cd C:\path\to\nssm\win64
-
-# 安装服务（会打开 GUI 配置界面）
-.\nssm.exe install bitsrun
-```
-
-4. 在 NSSM GUI 中配置：
-   - **Path（路径）**: `C:\Program Files\bitsrun\bitsrun.exe`
-   - **Startup directory（启动目录）**: `C:\Program Files\bitsrun`
-   - **Arguments（参数）**: `keep-alive --config C:\Program Files\bitsrun\bit-user.json`
-   - **Service name（服务名称）**: `bitsrun`
-
-5. 点击 "Install service（安装服务）" 按钮
-
-6. 启动服务：
-
-```powershell
-.\nssm.exe start bitsrun
-```
-
-#### 服务管理命令
-
-```powershell
-# 启动服务
-nssm start bitsrun
-
-# 停止服务
-nssm stop bitsrun
-
-# 删除服务
-nssm remove bitsrun confirm
-```
-
-### 方法三：使用 sc 命令配合 keep-alive（旧方案）
-
-也可以使用 Windows 内置的 `sc` 命令配合 `keep-alive` 子命令创建服务：
-
-```powershell
-# 以管理员身份运行
-sc create bitsrun binPath= "C:\Program Files\bitsrun\bitsrun.exe keep-alive --config C:\Program Files\bitsrun\bit-user.json" start= auto
-sc description bitsrun "BIT Campus Network Auto Login Service"
-sc start bitsrun
-```
-
-> [!NOTE]
-> 此方法使用 keep-alive 模式运行 bitsrun，但没有使用原生 Windows 服务集成。推荐使用方法一（原生 Windows 服务）以获得更好的 Windows SCM 集成。
 
 ### 附加说明
 
