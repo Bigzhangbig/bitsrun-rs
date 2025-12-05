@@ -51,6 +51,10 @@ pub enum Commands {
 
     /// Poll the server with login requests to keep the session alive
     KeepAlive(DaemonArgs),
+
+    /// Run as a Windows service (Windows only)
+    #[cfg(windows)]
+    WindowsService,
 }
 
 #[derive(Args)]

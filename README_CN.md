@@ -147,79 +147,64 @@ $ chmod 600 <path/to/bit-user.json>
 
 Windows 用户可以将 bitsrun 作为系统服务运行，以实现开机自动启动和后台保持在线。
 
+从 0.5.0 版本开始，bitsrun 支持使用 `windows-service` crate 实现的原生 Windows 服务，能够与 Windows 服务控制管理器 (SCM) 进行完整集成。
+
 ### 前提条件
 
 1. 从 [Releases](https://github.com/spencerwooo/bitsrun-rs/releases/latest) 下载 Windows 版本的 bitsrun 可执行文件
 2. 将可执行文件放置在一个永久位置（例如 `C:\Program Files\bitsrun\bitsrun.exe`）
 3. 创建配置文件 `bit-user.json` 并放置在合适的位置（例如 `C:\Program Files\bitsrun\bit-user.json`）
 
-### 使用 NSSM 安装服务（推荐）
+### 安装步骤
 
-NSSM（Non-Sucking Service Manager）是一个简单易用的 Windows 服务管理工具。
+1. 以管理员身份打开命令提示符或 PowerShell
 
-1. 下载 [NSSM](https://nssm.cc/download)
-2. 以管理员身份打开命令提示符或 PowerShell
-3. 运行以下命令安装服务：
+2. 使用内置的 `sc` 命令安装服务：
 
 ```powershell
-# 进入 NSSM 所在目录
-cd C:\path\to\nssm\win64
+# 进入 bitsrun 目录
+cd "C:\Program Files\bitsrun"
 
-# 安装服务（会打开 GUI 配置界面）
-.\nssm.exe install bitsrun
-```
-
-4. 在 NSSM GUI 中配置：
-   - **Path（路径）**: `C:\Program Files\bitsrun\bitsrun.exe`
-   - **Startup directory（启动目录）**: `C:\Program Files\bitsrun`
-   - **Arguments（参数）**: `keep-alive --config C:\Program Files\bitsrun\bit-user.json`
-   - **Service name（服务名称）**: `bitsrun`
-
-5. 点击 "Install service（安装服务）" 按钮
-
-6. 启动服务：
-
-```powershell
-.\nssm.exe start bitsrun
-```
-
-### 使用 sc 命令安装服务
-
-也可以使用 Windows 内置的 `sc` 命令来创建服务：
-
-```powershell
-# 以管理员身份运行
-sc create bitsrun binPath= "C:\Program Files\bitsrun\bitsrun.exe keep-alive --config C:\Program Files\bitsrun\bit-user.json" start= auto
+# 使用原生 Windows 服务模式安装服务
+sc create bitsrun binPath= "C:\Program Files\bitsrun\bitsrun.exe windows-service" start= auto
 sc description bitsrun "BIT Campus Network Auto Login Service"
+```
+
+3. 启动服务：
+
+```powershell
 sc start bitsrun
 ```
 
-### 服务管理命令
+### 服务管理
 
 ```powershell
-# 启动服务
-sc start bitsrun
-# 或使用 NSSM
-nssm start bitsrun
+# 查看服务状态
+sc query bitsrun
 
 # 停止服务
 sc stop bitsrun
-# 或使用 NSSM
-nssm stop bitsrun
+
+# 重启服务
+sc stop bitsrun
+sc start bitsrun
 
 # 删除服务
 sc delete bitsrun
-# 或使用 NSSM
-nssm remove bitsrun confirm
 ```
 
-### 查看服务状态
+> [!NOTE]
+> 原生 Windows 服务模式使用 `windows-service` 命令，可直接与 Windows 服务控制管理器 (SCM) 集成。服务会自动从默认配置路径读取配置，或者您可以将 `bit-user.json` 放在可执行文件的同一目录中。
 
-使用 Windows 服务管理器（`services.msc`）或命令行：
+### 附加说明
+
+可以使用 Windows 服务管理器（`services.msc`）或命令行查看服务状态：
 
 ```powershell
 sc query bitsrun
 ```
+
+您还可以在 Windows 事件查看器的"Windows 日志" > "应用程序"中查看服务日志以进行故障排查。
 
 > [!IMPORTANT]
 > 确保配置文件 `bit-user.json` 中包含正确的用户名和密码，并且路径使用绝对路径。在 Windows 上不需要设置文件权限为 600。
