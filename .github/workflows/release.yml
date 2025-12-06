@@ -15,8 +15,9 @@ jobs:
     name: Release for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
 
-    # Prevent job from running on forks
-    if: ${{ github.event_name == 'push' && github.event.repository.fork }}
+    # Only skip when the event is a push and the repository is a fork.
+    # This allows workflow_dispatch (manual runs) to execute normally.
+    if: ${{ github.event_name != 'push' || !github.event.repository.fork }}
 
     strategy:
       fail-fast: false
@@ -59,12 +60,12 @@ jobs:
       ARCHIVE_NAME: bitsrun-${{ matrix.target }}
 
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
 
       - name: Get version from cargo metadata on Linux
         if: startsWith(matrix.os, 'ubuntu')
         id: get_version
-        run: echo "version=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == "bitsrun").version')" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == \"bitsrun\").version')" >> "$GITHUB_OUTPUT"
 
       - name: Set up Ubuntu multiarch
         if: startsWith(matrix.os, 'ubuntu') && matrix.target-apt-arch != 'amd64'
