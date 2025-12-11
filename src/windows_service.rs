@@ -38,7 +38,7 @@ use log::{error, info};
 
 // 定义 Windows 服务名称
 // Define Windows service name
-const SERVICE_NAME: &str = "bitsrun";
+const SERVICE_NAME: &str = "Bitsrun";
 
 // 定义服务类型
 // Define service type
@@ -105,16 +105,25 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
         current_state: ServiceState::StartPending,
         controls_accepted: ServiceControlAccept::empty(),
         exit_code: ServiceExitCode::Win32(0),
-        checkpoint: 0,
-        wait_hint: Duration::from_secs(1),
+        checkpoint: 1,
+        wait_hint: Duration::from_secs(10),
         process_id: None,
     })?;
 
-    // 从配置文件读取守护进程配置
-    // Read daemon configuration from config file
-    // 注意：在服务模式下，需要使用绝对路径或将配置文件放在已知位置
-    // Note: In service mode, use absolute path or place config file in a known location
-    let config_path = None; // 使用默认配置路径 / Use default config paths
+    // 从可执行文件所在目录尝试读取配置文件
+    // Try reading config file from the executable directory
+    let config_path = match std::env::current_exe() {
+        Ok(mut exe_path) => {
+            exe_path.pop();
+            exe_path.push("bit-user.json");
+            let cfg = exe_path.to_string_lossy().to_string();
+            match std::fs::metadata(&cfg) {
+                Ok(meta) if meta.is_file() => Some(cfg),
+                _ => None,
+            }
+        }
+        Err(_) => None,
+    };
 
     let daemon = match SrunDaemon::new(config_path) {
         Ok(d) => d,
