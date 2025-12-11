@@ -15,9 +15,7 @@ jobs:
     name: Release for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
 
-    # Only skip when the event is a push and the repository is a fork.
-    # This allows workflow_dispatch (manual runs) to execute normally.
-    if: ${{ github.event_name != 'push' || !github.event.repository.fork }}
+    # For forks: allow the build to run but skip steps that upload or require secrets.
 
     strategy:
       fail-fast: false
@@ -61,6 +59,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Get version from cargo metadata on Linux
         if: startsWith(matrix.os, 'ubuntu')
@@ -123,6 +123,7 @@ jobs:
           cargo deb --no-build --target ${{ env.CARGO_BUILD_TARGET }}
 
       - name: Upload binary for release
+        if: ${{ !github.event.repository.fork }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -131,7 +132,7 @@ jobs:
           tag: ${{ github.ref }}
 
       - name: Upload deb for release
-        if: startsWith(env.CARGO_BUILD_TARGET, 'x86_64-unknown-linux')
+        if: ${{ !github.event.repository.fork && startsWith(env.CARGO_BUILD_TARGET, 'x86_64-unknown-linux') }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
