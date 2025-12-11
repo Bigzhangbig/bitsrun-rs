@@ -62,6 +62,12 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install jq on Ubuntu
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt-get -yq update
+          sudo apt-get -yq install jq
+
       - name: Get version from cargo metadata on Linux
         if: startsWith(matrix.os, 'ubuntu')
         id: get_version
@@ -123,7 +129,7 @@ jobs:
           cargo deb --no-build --target ${{ env.CARGO_BUILD_TARGET }}
 
       - name: Upload binary for release
-        if: ${{ !github.event.repository.fork }}
+        if: ${{ github.repository_owner == 'spencerwooo' }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -132,7 +138,7 @@ jobs:
           tag: ${{ github.ref }}
 
       - name: Upload deb for release
-        if: ${{ !github.event.repository.fork && startsWith(env.CARGO_BUILD_TARGET, 'x86_64-unknown-linux') }}
+        if: ${{ github.repository_owner == 'spencerwooo' && startsWith(env.CARGO_BUILD_TARGET, 'x86_64-unknown-linux') }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
