@@ -68,10 +68,11 @@ jobs:
           sudo apt-get -yq update
           sudo apt-get -yq install jq
 
-      - name: Get version from cargo metadata on Linux
-        if: startsWith(matrix.os, 'ubuntu')
-        id: get_version
-        run: echo "version=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == \"bitsrun\").version')" >> "$GITHUB_OUTPUT"
+      # moved later to ensure cargo is available
+      # - name: Get version from cargo metadata on Linux
+      #   if: startsWith(matrix.os, 'ubuntu')
+      #   id: get_version
+      #   run: echo "version=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == \"bitsrun\").version')" >> "$GITHUB_OUTPUT"
 
       - name: Set up Ubuntu multiarch
         if: startsWith(matrix.os, 'ubuntu') && matrix.target-apt-arch != 'amd64'
@@ -104,6 +105,11 @@ jobs:
         with:
           target: ${{ env.CARGO_BUILD_TARGET }}
 
+      - name: Get version from cargo metadata on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        id: get_version
+        run: echo "version=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == \"bitsrun\").version')" >> "$GITHUB_OUTPUT"
+
       - name: Build binaries
         run: cargo build --release --target=${{ env.CARGO_BUILD_TARGET }}
 
@@ -123,7 +129,7 @@ jobs:
           tar -vczf "${{ env.ARCHIVE_NAME }}.tar.gz" "${{ env.ARCHIVE_NAME }}"/*
 
       - name: Build and package deb (amd64)
-        if: startsWith(env.CARGO_BUILD_TARGET, 'x86_64-unknown-linux')
+        if: env.CARGO_BUILD_TARGET == 'x86_64-unknown-linux-gnu'
         run: |
           cargo install cargo-deb
           cargo deb --no-build --target ${{ env.CARGO_BUILD_TARGET }}
