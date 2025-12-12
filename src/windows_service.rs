@@ -265,58 +265,7 @@ pub fn run_windows_service() -> windows_service::Result<()> {
     // Attempt to run as Windows service
     match service_dispatcher::start(SERVICE_NAME, ffi_service_main) {
         Ok(_) => Ok(()),
-        Err(e) => {
-            // 如果启动失败（例如不是由 SCM 启动），尝试回退到控制台模式
-            // If start fails (e.g. not started by SCM), try fallback to console mode
-            eprintln!("Failed to start service dispatcher: {}", e);
-            eprintln!("Attempting to run in console mode (manual run)...");
-            
-            run_console_fallback().map_err(|_| {
-                // 将 console error 转换为 windows_service error
-                // Convert console error to windows_service error
-                // 使用 Winapi error 包装 io::Error
-                windows_service::Error::Winapi(std::io::Error::from_raw_os_error(1)) 
-            })
-        }
+        Err(e) => Err(e),
     }
 }
 
-/// 控制台模式回退
-/// Fallback for console mode
-#[cfg(windows)]
-fn run_console_fallback() -> anyhow::Result<()> {
-    // 初始化服务日志（事件日志 + 文件），便于在控制台模式下验证
-    // Initialize service logger (Event Log + File) to validate in console mode
-    let _ = crate::service_logger::init(SERVICE_NAME);
-    
-    // 查找配置
-    // Find config
-    let config_path = match std::env::current_exe() {
-        Ok(mut exe_path) => {
-            exe_path.pop();
-            exe_path.push("bit-user.json");
-            let cfg = exe_path.to_string_lossy().to_string();
-            match std::fs::metadata(&cfg) {
-                Ok(meta) if meta.is_file() => Some(cfg),
-                _ => None,
-            }
-        }
-        Err(_) => None,
-    };
-
-    // 创建 daemon
-    // Create daemon
-    let daemon = SrunDaemon::new(config_path)?;
-    
-    // 创建 runtime
-    // Create runtime
-    let runtime = tokio::runtime::Runtime::new()?;
-    
-    let http_client = reqwest::Client::new();
-    
-    // 运行 daemon (SrunDaemon::start 处理 Ctrl+C)
-    // Run daemon (SrunDaemon::start handles Ctrl+C)
-    runtime.block_on(async {
-        daemon.start(http_client).await
-    })
-}
