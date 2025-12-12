@@ -4,7 +4,7 @@ English | [简体中文](windows-service.zh-CN.md)
 
 This document describes how to run `bitsrun` as a native Windows Service (SCM-managed), mirroring the behavior of the minimal branch.
 
-## 概述
+## Overview
 
 - Service name: `Bitsrun`
 - Type: Own process managed by SCM
