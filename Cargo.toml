@@ -41,6 +41,7 @@ enable-ansi-support = "0.2"
 
 [target.'cfg(windows)'.dependencies]
 windows-service = "0.7"
+winlog2 = "0.3"
 
 [profile.release]
 strip = "symbols"

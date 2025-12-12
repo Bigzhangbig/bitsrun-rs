@@ -110,6 +110,11 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
         process_id: None,
     })?;
 
+    #[cfg(windows)]
+    {
+        let _ = winlog2::init(SERVICE_NAME);
+    }
+
     // 从可执行文件所在目录尝试读取配置文件
     // Try reading config file from the executable directory
     let config_path = match std::env::current_exe() {

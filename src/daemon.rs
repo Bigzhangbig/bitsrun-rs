@@ -46,9 +46,9 @@ impl SrunDaemon {
     /// 初始化日志记录器
     /// Initialize logger
     fn init_logger() {
-        pretty_env_logger::formatted_builder()
+        let _ = pretty_env_logger::formatted_builder()
             .filter_level(log::LevelFilter::Info)
-            .init();
+            .try_init();
     }
 
     pub async fn start(&self, http_client: Client) -> Result<()> {
