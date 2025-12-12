@@ -121,7 +121,7 @@ sc.exe description Bitsrun "Bitsrun keep-alive service for BIT gateway"
 
 > [!NOTE]
 > Creating and starting the service requires Administrator privileges for proper Event Log source registration.
-> > Detailed guide: [`docs/windows-service.md`](docs/windows-service.md)
+> Detailed guide: [`docs/windows-service.md`](docs/windows-service.md)
 
 ## Config and credentials
 
