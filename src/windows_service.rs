@@ -183,7 +183,11 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
         }
         Err(_) => "unknown".to_string(),
     };
-    let status_msg = format!("daemon initialized; config={}; account={}", cfg, daemon.username());
+    let status_msg = format!(
+        "daemon initialized; config={}; account={}",
+        cfg,
+        daemon.username()
+    );
     log_event(1100, Level::Info, &status_msg);
 
     // 创建 tokio 运行时以运行异步代码
@@ -269,3 +273,13 @@ pub fn run_windows_service() -> windows_service::Result<()> {
     }
 }
 
+#[cfg(test)]
+#[cfg(windows)]
+mod tests {
+    use super::*;
+    #[test]
+    fn dispatcher_returns_error_when_not_started_by_scm() {
+        let res = run_windows_service();
+        assert!(res.is_err());
+    }
+}

@@ -97,3 +97,16 @@ pub struct DaemonArgs {
     #[arg(short, long)]
     pub config: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn help_flag_displays() {
+        let res = Arguments::try_parse_from(["bitsrun", "--help"]);
+        match res {
+            Err(e) => assert_eq!(e.kind(), clap::error::ErrorKind::DisplayHelp),
+            Ok(_) => panic!("--help should not parse as success"),
+        }
+    }
+}
