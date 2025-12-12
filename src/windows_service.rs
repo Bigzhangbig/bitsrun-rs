@@ -34,7 +34,11 @@ use windows_service::{
 #[cfg(windows)]
 use crate::daemon::SrunDaemon;
 #[cfg(windows)]
-use log::{error, info};
+use crate::service_logger;
+#[cfg(windows)]
+use crate::service_logger::log_event;
+#[cfg(windows)]
+use log::{error, info, Level};
 
 // 定义 Windows 服务名称
 // Define Windows service name
@@ -110,10 +114,29 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
         process_id: None,
     })?;
 
-    #[cfg(windows)]
-    {
-        let _ = winlog2::init(SERVICE_NAME);
+    // 初始化日志记录器 (Event Log + File)
+    // Initialize logger (Event Log + File)
+    if service_logger::init(SERVICE_NAME).is_err() {
+        // Logging failed, but we should try to continue or at least report via SCM?
+        // If we can't log, we can't `error!`.
+        // Just continue.
+        // Or write to stderr (which goes nowhere in service).
     }
+
+    // 尽快通知 SCM 服务状态为 Running，以避免 1053 错误
+    // Notify SCM as soon as possible that service is Running to avoid 1053 error
+    status_handle.set_service_status(ServiceStatus {
+        service_type: SERVICE_TYPE,
+        current_state: ServiceState::Running,
+        controls_accepted: ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN,
+        exit_code: ServiceExitCode::Win32(0),
+        checkpoint: 0,
+        wait_hint: Duration::default(),
+        process_id: None,
+    })?;
+
+    info!("Service status set to Running");
+    log_event(1000, Level::Info, "Service started");
 
     // 从可执行文件所在目录尝试读取配置文件
     // Try reading config file from the executable directory
@@ -134,8 +157,8 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
         Ok(d) => d,
         Err(e) => {
             error!("Failed to create daemon: {}", e);
-            // 通知 SCM 服务启动失败
-            // Notify SCM that service start failed
+            // 通知 SCM 服务停止
+            // Notify SCM that service stopped
             status_handle.set_service_status(ServiceStatus {
                 service_type: SERVICE_TYPE,
                 current_state: ServiceState::Stopped,
@@ -149,19 +172,19 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
         }
     };
 
-    // 尽快通知 SCM 服务状态为 Running
-    // Notify SCM as soon as possible that service is Running
-    status_handle.set_service_status(ServiceStatus {
-        service_type: SERVICE_TYPE,
-        current_state: ServiceState::Running,
-        controls_accepted: ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN,
-        exit_code: ServiceExitCode::Win32(0),
-        checkpoint: 0,
-        wait_hint: Duration::default(),
-        process_id: None,
-    })?;
-
-    info!("Service started successfully");
+    info!("Daemon initialized");
+    // 单条日志记录守护进程状态、配置路径和账号
+    // Single log for daemon status, config path, and account
+    let cfg = match std::env::current_exe() {
+        Ok(mut p) => {
+            p.pop();
+            p.push("bit-user.json");
+            p.to_string_lossy().to_string()
+        }
+        Err(_) => "unknown".to_string(),
+    };
+    let status_msg = format!("daemon initialized; config={}; account={}", cfg, daemon.username());
+    log_event(1100, Level::Info, &status_msg);
 
     // 创建 tokio 运行时以运行异步代码
     // Create tokio runtime to run async code
@@ -169,8 +192,6 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
         Ok(rt) => rt,
         Err(e) => {
             error!("Failed to create tokio runtime: {}", e);
-            // 通知 SCM 服务启动失败
-            // Notify SCM that service start failed
             status_handle.set_service_status(ServiceStatus {
                 service_type: SERVICE_TYPE,
                 current_state: ServiceState::Stopped,
@@ -213,6 +234,7 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
     });
 
     info!("Service stopping");
+    log_event(1002, Level::Info, "Service stopping");
 
     // 退出循环前通知 SCM 服务状态为 Stopped
     // Notify SCM that service is Stopped before exiting the loop
@@ -227,6 +249,7 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
     })?;
 
     info!("Service stopped");
+    log_event(1003, Level::Info, "Service stopped");
 
     Ok(())
 }
@@ -238,8 +261,62 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
 /// This function should be called from the main function
 #[cfg(windows)]
 pub fn run_windows_service() -> windows_service::Result<()> {
-    // 将服务分发给服务控制管理器
-    // Dispatch the service to the Service Control Manager
-    service_dispatcher::start(SERVICE_NAME, ffi_service_main)?;
-    Ok(())
+    // 尝试作为 Windows 服务运行
+    // Attempt to run as Windows service
+    match service_dispatcher::start(SERVICE_NAME, ffi_service_main) {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            // 如果启动失败（例如不是由 SCM 启动），尝试回退到控制台模式
+            // If start fails (e.g. not started by SCM), try fallback to console mode
+            eprintln!("Failed to start service dispatcher: {}", e);
+            eprintln!("Attempting to run in console mode (manual run)...");
+            
+            run_console_fallback().map_err(|_| {
+                // 将 console error 转换为 windows_service error
+                // Convert console error to windows_service error
+                // 使用 Winapi error 包装 io::Error
+                windows_service::Error::Winapi(std::io::Error::from_raw_os_error(1)) 
+            })
+        }
+    }
+}
+
+/// 控制台模式回退
+/// Fallback for console mode
+#[cfg(windows)]
+fn run_console_fallback() -> anyhow::Result<()> {
+    // 初始化服务日志（事件日志 + 文件），便于在控制台模式下验证
+    // Initialize service logger (Event Log + File) to validate in console mode
+    let _ = crate::service_logger::init(SERVICE_NAME);
+    
+    // 查找配置
+    // Find config
+    let config_path = match std::env::current_exe() {
+        Ok(mut exe_path) => {
+            exe_path.pop();
+            exe_path.push("bit-user.json");
+            let cfg = exe_path.to_string_lossy().to_string();
+            match std::fs::metadata(&cfg) {
+                Ok(meta) if meta.is_file() => Some(cfg),
+                _ => None,
+            }
+        }
+        Err(_) => None,
+    };
+
+    // 创建 daemon
+    // Create daemon
+    let daemon = SrunDaemon::new(config_path)?;
+    
+    // 创建 runtime
+    // Create runtime
+    let runtime = tokio::runtime::Runtime::new()?;
+    
+    let http_client = reqwest::Client::new();
+    
+    // 运行 daemon (SrunDaemon::start 处理 Ctrl+C)
+    // Run daemon (SrunDaemon::start handles Ctrl+C)
+    runtime.block_on(async {
+        daemon.start(http_client).await
+    })
 }

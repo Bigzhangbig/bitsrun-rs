@@ -166,42 +166,44 @@ Starting from version 0.5.0, bitsrun has native Windows service support using th
 cd "C:\Program Files\bitsrun"
 
 # Install service using native Windows service mode
-sc create bitsrun binPath= "C:\Program Files\bitsrun\bitsrun.exe windows-service" start= auto
-sc description bitsrun "BIT Campus Network Auto Login Service"
+sc create Bitsrun binPath= "C:\Program Files\bitsrun\bitsrun.exe windows-service" start= auto
+sc description Bitsrun "BIT Campus Network Auto Login Service"
 ```
 
 3. Start the service:
 
 ```powershell
-sc start bitsrun
+sc start Bitsrun
 ```
 
 ### Service Management
 
 ```powershell
 # Check service status
-sc query bitsrun
+sc query Bitsrun
 
 # Stop service
-sc stop bitsrun
+sc stop Bitsrun
 
 # Restart service
-sc stop bitsrun
-sc start bitsrun
+sc stop Bitsrun
+sc start Bitsrun
 
 # Remove service
-sc delete bitsrun
+sc delete Bitsrun
 ```
 
 > [!NOTE]
 > The native Windows service mode uses the `windows-service` command which integrates directly with Windows Service Control Manager (SCM). The service will automatically read configuration from default config paths or you can place `bit-user.json` in the same directory as the executable.
+>
+> The service name must be `Bitsrun` to match the internal service name constant.
 
 ### Additional Notes
 
 You can check the service status using Windows Service Manager (`services.msc`) or command line:
 
 ```powershell
-sc query bitsrun
+sc query Bitsrun
 ```
 
 You can also view service logs in Windows Event Viewer under "Windows Logs" > "Application" for troubleshooting.

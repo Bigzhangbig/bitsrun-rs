@@ -166,42 +166,44 @@ Windows 用户可以将 bitsrun 作为系统服务运行，以实现开机自动
 cd "C:\Program Files\bitsrun"
 
 # 使用原生 Windows 服务模式安装服务
-sc create bitsrun binPath= "C:\Program Files\bitsrun\bitsrun.exe windows-service" start= auto
-sc description bitsrun "BIT Campus Network Auto Login Service"
+sc create Bitsrun binPath= "C:\Program Files\bitsrun\bitsrun.exe windows-service" start= auto
+sc description Bitsrun "BIT Campus Network Auto Login Service"
 ```
 
 3. 启动服务：
 
 ```powershell
-sc start bitsrun
+sc start Bitsrun
 ```
 
 ### 服务管理
 
 ```powershell
 # 查看服务状态
-sc query bitsrun
+sc query Bitsrun
 
 # 停止服务
-sc stop bitsrun
+sc stop Bitsrun
 
 # 重启服务
-sc stop bitsrun
-sc start bitsrun
+sc stop Bitsrun
+sc start Bitsrun
 
 # 删除服务
-sc delete bitsrun
+sc delete Bitsrun
 ```
 
 > [!NOTE]
 > 原生 Windows 服务模式使用 `windows-service` 命令，可直接与 Windows 服务控制管理器 (SCM) 集成。服务会自动从默认配置路径读取配置，或者您可以将 `bit-user.json` 放在可执行文件的同一目录中。
+>
+> 服务名需为 `Bitsrun`，以与代码中的服务名常量保持一致。
 
 ### 附加说明
 
 可以使用 Windows 服务管理器（`services.msc`）或命令行查看服务状态：
 
 ```powershell
-sc query bitsrun
+sc query Bitsrun
 ```
 
 您还可以在 Windows 事件查看器的"Windows 日志" > "应用程序"中查看服务日志以进行故障排查。

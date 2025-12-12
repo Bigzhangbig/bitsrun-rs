@@ -24,6 +24,8 @@ mod xencode;
 
 #[cfg(windows)]
 mod windows_service;
+#[cfg(windows)]
+mod service_logger;
 
 use anyhow::Context;
 use anyhow::Result;
@@ -45,6 +47,13 @@ use tables::print_login_state;
 
 #[tokio::main]
 async fn main() {
+    #[cfg(windows)]
+    {
+        // Try to start as a Windows service first; if not launched by SCM, this will error
+        if windows_service::run_windows_service().is_ok() {
+            return;
+        }
+    }
     if let Err(err) = cli().await {
         eprintln!(
             "{} {}: {}",

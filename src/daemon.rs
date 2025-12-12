@@ -20,6 +20,10 @@ use crate::config;
 use anyhow::Result;
 use log::info;
 use log::warn;
+#[cfg(windows)]
+use log::Level;
+#[cfg(windows)]
+use crate::service_logger::log_event;
 
 use reqwest::Client;
 use serde::Deserialize;
@@ -41,6 +45,10 @@ impl SrunDaemon {
         // in daemon mode, bitsrun must be able to read all required fields from the config file,
         // including `username`, `password`, and `dm`.
         config::read_config_file::<SrunDaemon>(&config_path)
+    }
+
+    pub fn username(&self) -> &str {
+        &self.username
     }
 
     /// 初始化日志记录器
@@ -94,14 +102,31 @@ impl SrunDaemon {
                             match resp.error.as_str() {
                                 "ok" => {
                                     info!("{} ({}): login success, {}", resp.client_ip, self.username, resp.suc_msg.unwrap_or_default());
+                                    #[cfg(windows)]
+                                    {
+                                        let msg = format!("login success; ip={}; account={}", resp.client_ip, self.username);
+                                        log_event(2000, Level::Info, &msg);
+                                    }
                                 }
                                 _ => {
                                     warn!("{} ({}): login failed, {}", resp.client_ip, self.username, resp.error);
+                                    #[cfg(windows)]
+                                    {
+                                        if resp.error != "ip_already_online_error" {
+                                            let msg = format!("login failed; ip={}; account={}; reason={}", resp.client_ip, self.username, resp.error);
+                                            log_event(2001, Level::Warn, &msg);
+                                        }
+                                    }
                                 }
                             }
                         }
                         Err(e) => {
                             warn!("{}: login failed: {}", self.username, e);
+                            #[cfg(windows)]
+                            {
+                                let msg = format!("login failed; account={}; reason={}", self.username, e);
+                                log_event(2001, Level::Warn, &msg);
+                            }
                         }
                     }
                 }
@@ -170,14 +195,31 @@ impl SrunDaemon {
                             match resp.error.as_str() {
                                 "ok" => {
                                     info!("{} ({}): login success, {}", resp.client_ip, self.username, resp.suc_msg.unwrap_or_default());
+                                    #[cfg(windows)]
+                                    {
+                                        let msg = format!("login success; ip={}; account={}", resp.client_ip, self.username);
+                                        log_event(2000, Level::Info, &msg);
+                                    }
                                 }
                                 _ => {
                                     warn!("{} ({}): login failed, {}", resp.client_ip, self.username, resp.error);
+                                    #[cfg(windows)]
+                                    {
+                                        if resp.error != "ip_already_online_error" {
+                                            let msg = format!("login failed; ip={}; account={}; reason={}", resp.client_ip, self.username, resp.error);
+                                            log_event(2001, Level::Warn, &msg);
+                                        }
+                                    }
                                 }
                             }
                         }
                         Err(e) => {
                             warn!("{}: login failed: {}", self.username, e);
+                            #[cfg(windows)]
+                            {
+                                let msg = format!("login failed; account={}; reason={}", self.username, e);
+                                log_event(2001, Level::Warn, &msg);
+                            }
                         }
                     }
                 }
