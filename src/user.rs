@@ -1,6 +1,20 @@
-use crate::config;
+//! 用户凭据管理模块
+//!
+//! 本模块负责处理用户认证信息的获取和管理：
+//! - 从命令行参数、配置文件或交互式提示获取用户名和密码
+//! - 按优先级合并来自不同来源的凭据
+//! - 提供交互式提示输入缺失的凭据
+//! - 支持密码的安全输入（不显示明文）
+//!
+//! User Credential Management Module
+//!
+//! This module handles user authentication information retrieval and management:
+//! - Obtains username and password from command-line arguments, config file, or interactive prompts
+//! - Merges credentials from different sources by priority
+//! - Provides interactive prompts for missing credentials
+//! - Supports secure password input (hidden from display)
 
-use std::fs;
+use crate::config;
 
 use anyhow::Context;
 use anyhow::Result;
@@ -37,28 +51,20 @@ impl BitUserPartial {
 
 /// Parse bit user credentials from config file
 fn parse_bit_user_config(config_path: &Option<String>) -> Result<BitUserPartial> {
-    let config = config::validate_config_file(config_path)?;
-
-    let user_str_from_file = fs::read_to_string(&config).with_context(|| {
-        format!(
-            "failed to read config file `{}`",
-            &config.if_supports_color(Stdout, |t| t.underline())
-        )
-    })?;
-    let user_from_file =
-        serde_json::from_str::<BitUserPartial>(&user_str_from_file).with_context(|| {
-            format!(
-                "failed to parse config file `{}`",
-                &config.if_supports_color(Stdout, |t| t.underline())
-            )
-        })?;
-    Ok(user_from_file)
+    config::read_config_file::<BitUserPartial>(config_path)
 }
 
 /// Get campus network user credentials from command line arguments or config file
 ///
 /// Note that when logging out, `password` is not required.
 /// In this case, `require_password` should be set to `false`.
+///
+/// 从命令行参数或配置文件获取校园网用户凭据
+///
+/// 注意：登出时不需要密码，此时应将 `require_password` 设置为 `false`
+///
+/// 凭据优先级：命令行参数 > 配置文件 > 交互式提示
+/// Priority: command-line arguments > config file > interactive prompts
 pub fn finalize_bit_user(
     username: &Option<String>,
     password: &Option<String>,
@@ -68,7 +74,8 @@ pub fn finalize_bit_user(
 ) -> Result<BitUser> {
     let mut bit_user = BitUserPartial::new(username, password, Some(dm));
 
-    // username and password priority: command line > config file > prompt
+    // 如果缺少必要的凭据，尝试从配置文件读取
+    // If required credentials are missing, try reading from config file
     if bit_user.username.is_none() | (require_password & bit_user.password.is_none()) {
         let mut user_from_file = BitUserPartial::default();
         match parse_bit_user_config(config_path) {
