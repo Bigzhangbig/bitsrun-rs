@@ -1,3 +1,19 @@
+//! 表格输出工具模块
+//!
+//! 本模块提供格式化的表格输出功能：
+//! - 打印可用的配置文件路径列表
+//! - 以表格形式展示登录状态信息（流量使用、在线时间、余额等）
+//! - 使用 tabled 库生成美观的 ASCII 表格
+//! - 支持彩色输出以提升可读性
+//!
+//! Table Output Utility Module
+//!
+//! This module provides formatted table output functionality:
+//! - Prints available config file path list
+//! - Displays login state information in table format (traffic usage, online time, balance, etc.)
+//! - Uses tabled library to generate beautiful ASCII tables
+//! - Supports colored output for improved readability
+
 use crate::client::SrunLoginState;
 use crate::config::enumerate_config_paths;
 

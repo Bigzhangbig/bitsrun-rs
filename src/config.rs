@@ -1,7 +1,22 @@
+//! 配置文件管理模块
+//!
+//! 本模块处理配置文件的查找、验证和权限检查：
+//! - 枚举平台特定的配置文件路径（Windows、Linux、macOS）
+//! - 验证配置文件的存在性和可读性
+//! - 检查配置文件权限（Unix 系统需要 600 权限）
+//!
+//! Configuration File Management Module
+//!
+//! This module handles configuration file discovery, validation, and permission checks:
+//! - Enumerates platform-specific config file paths (Windows, Linux, macOS)
+//! - Validates config file existence and readability
+//! - Checks config file permissions (Unix systems require 600 permissions)
+
 use std::env;
 use std::fs;
 
 use anyhow::anyhow;
+use anyhow::Context;
 use anyhow::Error;
 use anyhow::Result;
 use owo_colors::OwoColorize;
@@ -116,4 +131,28 @@ pub fn validate_config_file(config_path: &Option<String>) -> Result<String, Erro
         ));
     }
     Ok(validated_config_path)
+}
+
+/// Helper function to read and parse a config file into a type T
+///
+/// This combines config validation, file reading, and JSON parsing with proper error handling
+pub fn read_config_file<T>(config_path: &Option<String>) -> Result<T>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let validated_config = validate_config_file(config_path)?;
+
+    let config_str = fs::read_to_string(&validated_config).with_context(|| {
+        format!(
+            "failed to read config file `{}`",
+            &validated_config.if_supports_color(Stdout, |t| t.underline())
+        )
+    })?;
+
+    serde_json::from_str::<T>(&config_str).with_context(|| {
+        format!(
+            "failed to parse config file `{}`",
+            &validated_config.if_supports_color(Stdout, |t| t.underline())
+        )
+    })
 }
