@@ -116,8 +116,8 @@ sc.exe description Bitsrun "Bitsrun keep-alive service for BIT gateway"
 }
 ```
 
-- `dm`：若当前设备属于“哑终端”，登出需要使用备用端点，如果你使用的设备是**普通终端**，请设为 `true` ！
-- `poll_interval`：守护进程轮询登录请求的间隔（秒），默认 `3600`
+- `dm`：若当前设备属于“哑终端”，登出需要使用备用端点，如果你使用的设备是**普通终端**，请设为 `true`
+- `poll_interval`：守护进程轮询登录请求的间隔（秒），默认为 `3600`
 
 Linux / macOS 上需将此文件权限设为 `600`，否则 `bitsrun` 将拒绝读取：
 
