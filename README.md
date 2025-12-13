@@ -1,5 +1,7 @@
 # bitsrun
 
+English | [简体中文](README.zh-CN.md)
+
 [![GitHub Workflow Status (CI)](https://img.shields.io/github/actions/workflow/status/spencerwooo/bitsrun-rs/ci.yml?logo=github&label=ci&labelColor=%23223227)](https://github.com/spencerwooo/bitsrun-rs/actions/workflows/ci.yml)
 [![GitHub Workflow Status (Release)](https://img.shields.io/github/actions/workflow/status/spencerwooo/bitsrun-rs/release.yml?logo=github&label=release&labelColor=%23223227)](https://github.com/spencerwooo/bitsrun-rs/actions/workflows/release.yml)
 [![GitHub release](https://img.shields.io/github/v/release/spencerwooo/bitsrun-rs?logo=github&labelColor=%23223227)](https://github.com/spencerwooo/bitsrun-rs/releases/latest)
@@ -8,6 +10,7 @@
 🌐 A headless login and logout CLI for gateway (10.0.0.55) at BIT, now in Rust.
 
 ![CleanShot 2023-12-04 at 16 47 26@2x](https://github.com/spencerwooo/bitsrun-rs/assets/32114380/23343ba1-961c-41aa-b4b6-c09da93fb699)
+
 
 ## Install
 
@@ -71,6 +74,7 @@ $ bitsrun keep-alive
 
 > [!NOTE]
 > Use available system service managers to run `bitsrun keep-alive` as a daemon. (e.g., `systemd` for Linux, `launchd` for macOS, and Windows Service for Windows).
+> See [`docs/windows-service.md`](docs/windows-service.md) for Windows service setup.
 
 ## Available commands
 
@@ -96,6 +100,28 @@ Options:
 
 > [!TIP]
 > Use environment variable `NO_COLOR=true` to disable colored output.
+
+## Windows Service (Windows only)
+
+When launched by the Windows Service Control Manager (SCM), `bitsrun` runs the `keep-alive` daemon in service context and reports status to SCM. Logging goes to both Windows Event Log (source: `Bitsrun`) and a local file `bitsrun_service.log` next to the executable.
+
+Quick setup:
+
+```powershell
+sc.exe create Bitsrun binPath= "C:\Program Files\Bitsrun\bitsrun.exe" DisplayName= "Bitsrun" start= auto
+sc.exe description Bitsrun "Bitsrun keep-alive service for BIT gateway"
+```
+
+- Place `bit-user.json` in the same directory as `bitsrun.exe` so the service can find it automatically.
+- Manage service: `sc.exe start Bitsrun`, `sc.exe stop Bitsrun`, `sc.exe query Bitsrun`
+- Remove service: `sc.exe stop Bitsrun` then `sc.exe delete Bitsrun`
+- Check logs:
+  - File: `bitsrun_service.log` beside `bitsrun.exe`
+  - Event Viewer → Windows Logs → Application → Source: `Bitsrun`
+
+> [!NOTE]
+> Creating and starting the service requires Administrator privileges for proper Event Log source registration.
+> Detailed guide: [`docs/windows-service.md`](docs/windows-service.md)
 
 ## Config and credentials
 
