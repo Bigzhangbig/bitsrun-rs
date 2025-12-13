@@ -1,3 +1,23 @@
+//! 命令行参数定义模块
+//!
+//! 本模块定义了所有命令行参数、子命令及其选项，使用 clap 库进行解析。
+//! 包含以下主要结构：
+//! - `Arguments`: 顶层命令行参数结构
+//! - `Commands`: 所有可用的子命令枚举
+//! - `ClientArgs`: 登录/登出命令的参数
+//! - `StatusArgs`: 状态查询命令的参数
+//! - `DaemonArgs`: 守护进程命令的参数
+//!
+//! Command-line argument definition module
+//!
+//! This module defines all command-line arguments, subcommands, and their options using clap.
+//! Main structures include:
+//! - `Arguments`: Top-level command-line argument structure
+//! - `Commands`: Enum of all available subcommands
+//! - `ClientArgs`: Arguments for login/logout commands
+//! - `StatusArgs`: Arguments for status command
+//! - `DaemonArgs`: Arguments for daemon command
+
 use std::net::IpAddr;
 
 use clap::Args;
@@ -31,6 +51,10 @@ pub enum Commands {
 
     /// Poll the server with login requests to keep the session alive
     KeepAlive(DaemonArgs),
+
+    /// Run as a Windows service (Windows only)
+    #[cfg(windows)]
+    WindowsService,
 }
 
 #[derive(Args)]
@@ -72,4 +96,17 @@ pub struct DaemonArgs {
     /// Path to the config file
     #[arg(short, long)]
     pub config: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn help_flag_displays() {
+        let res = Arguments::try_parse_from(["bitsrun", "--help"]);
+        match res {
+            Err(e) => assert_eq!(e.kind(), clap::error::ErrorKind::DisplayHelp),
+            Ok(_) => panic!("--help should not parse as success"),
+        }
+    }
 }
