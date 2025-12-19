@@ -1,26 +1,32 @@
 # bitsrun
+## Credits
 
+This project is a fork of [spencerwooo/bitsrun-rs](https://github.com/spencerwooo/bitsrun-rs).
+
+- **Original Author**: [Spencer Woo](https://github.com/spencerwooo)
+- **Original License**: MIT
+
+Special thanks to the original author for the excellent work on the core logic and implementation of this BIT campus network client.
 English | [简体中文](README.zh-CN.md)
 
-[![GitHub Workflow Status (CI)](https://img.shields.io/github/actions/workflow/status/spencerwooo/bitsrun-rs/ci.yml?logo=github&label=ci&labelColor=%23223227)](https://github.com/spencerwooo/bitsrun-rs/actions/workflows/ci.yml)
-[![GitHub Workflow Status (Release)](https://img.shields.io/github/actions/workflow/status/spencerwooo/bitsrun-rs/release.yml?logo=github&label=release&labelColor=%23223227)](https://github.com/spencerwooo/bitsrun-rs/actions/workflows/release.yml)
-[![GitHub release](https://img.shields.io/github/v/release/spencerwooo/bitsrun-rs?logo=github&labelColor=%23223227)](https://github.com/spencerwooo/bitsrun-rs/releases/latest)
-[![Crates.io](https://img.shields.io/crates/d/bitsrun?logo=rust&labelColor=%23223227&color=%23dec867)](https://crates.io/crates/bitsrun)
+[![GitHub Workflow Status (CI)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/ci.yml?logo=github&label=ci&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/ci.yml)
+[![GitHub Workflow Status (Release)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/release.yml?logo=github&label=release&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/release.yml)
+[![GitHub release](https://img.shields.io/github/v/release/Bigzhangbig/bitsrun-rs?logo=github&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/releases/latest)
 
 🌐 A headless login and logout CLI for gateway (10.0.0.55) at BIT, now in Rust.
 
-![CleanShot 2023-12-04 at 16 47 26@2x](https://github.com/spencerwooo/bitsrun-rs/assets/32114380/23343ba1-961c-41aa-b4b6-c09da93fb699)
+![CleanShot 2023-12-04 at 16 47 26@2x](https://github.com/Bigzhangbig/bitsrun-rs/assets/32114380/23343ba1-961c-41aa-b4b6-c09da93fb699)
 
 
 ## Install
 
 #### One-line install (Linux / macOS, recommended)
 
-- `curl -fsSL https://cdn.jsdelivr.net/gh/spencerwooo/bitsrun-rs@main/install.sh | sh -`
+- `curl -fsSL https://cdn.jsdelivr.net/gh/Bigzhangbig/bitsrun-rs@main/install.sh | sh -`
 
 #### Ubuntu / Debian (recommended for `systemd` support)
 
-- Download the latest `.deb` package from [Releases](https://github.com/spencerwooo/bitsrun-rs/releases/latest).
+- Download the latest `.deb` package from [Releases](https://github.com/Bigzhangbig/bitsrun-rs/releases/latest).
 - `sudo apt install </path/to/file>.deb`
 
 **If `bitsrun.service` systemd service required:**
@@ -34,7 +40,7 @@ English | [简体中文](README.zh-CN.md)
 
 #### Download binary
 
-- Download the latest binary from [Releases](https://github.com/spencerwooo/bitsrun-rs/releases/latest).
+- Download the latest binary from [Releases](https://github.com/Bigzhangbig/bitsrun-rs/releases/latest).
 - Uncompress file: `tar -xvf <file>.tar.gz`
 - Move binary to `$PATH`, such as: `mv <file>/bitsrun ~/.local/bin/`
 
