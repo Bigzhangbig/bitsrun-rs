@@ -8,7 +8,8 @@ English | [简体中文](README.zh-CN.md)
 
 🌐 A headless login and logout CLI for gateway (10.0.0.55) at BIT, now in Rust.
 
-![CleanShot 2023-12-04 at 16 47 26@2x](https://github.com/Bigzhangbig/bitsrun-rs/assets/32114380/23343ba1-961c-41aa-b4b6-c09da93fb699)
+<img width="1233" height="716" alt="image" src="https://github.com/user-attachments/assets/bbc39c66-3aff-426d-b487-b51d949b6957" />
+
 
 
 ## Install
