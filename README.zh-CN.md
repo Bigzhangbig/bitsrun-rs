@@ -2,10 +2,9 @@
 
 [English](README.md) | 简体中文
 
-[![GitHub Workflow Status (CI)](https://img.shields.io/github/actions/workflow/status/spencerwooo/bitsrun-rs/ci.yml?logo=github&label=ci&labelColor=%23223227)](https://github.com/spencerwooo/bitsrun-rs/actions/workflows/ci.yml)
-[![GitHub Workflow Status (Release)](https://img.shields.io/github/actions/workflow/status/spencerwooo/bitsrun-rs/release.yml?logo=github&label=release&labelColor=%23223227)](https://github.com/spencerwooo/bitsrun-rs/actions/workflows/release.yml)
-[![GitHub release](https://img.shields.io/github/v/release/spencerwooo/bitsrun-rs?logo=github&labelColor=%23223227)](https://github.com/spencerwooo/bitsrun-rs/releases/latest)
-[![Crates.io](https://img.shields.io/crates/d/bitsrun?logo=rust&labelColor=%23223227&color=%23dec867)](https://crates.io/crates/bitsrun)
+[![GitHub Workflow Status (CI)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/ci.yml?logo=github&label=ci&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/ci.yml)
+[![GitHub Workflow Status (Release)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/release.yml?logo=github&label=release&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/release.yml)
+[![GitHub release](https://img.shields.io/github/v/release/Bigzhangbig/bitsrun-rs?logo=github&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/releases/latest)
 
 🌐 北京理工大学（BIT）校园网网关（10.0.0.55）的无界面登录/登出 CLI（Rust 版）。
 
@@ -13,13 +12,13 @@
 
 ## 安装
 
-- 一行安装（Linux / macOS，推荐）：`curl -fsSL https://cdn.jsdelivr.net/gh/spencerwooo/bitsrun-rs@main/install.sh | sh -`
+- 一键安装（Linux / macOS，推荐）：`curl -fsSL https://cdn.jsdelivr.net/gh/Bigzhangbig/bitsrun-rs@main/install.sh | sh -`
 - Ubuntu / Debian（推荐，支持 `systemd`）：
-  - 从 [Releases](https://github.com/spencerwooo/bitsrun-rs/releases/latest) 下载最新 `.deb`
+  - 从 [Releases](https://github.com/Bigzhangbig/bitsrun-rs/releases/latest) 下载最新 `.deb`
   - `sudo apt install </path/to/file>.deb`
   - 如需 `bitsrun.service`：编辑 `/lib/systemd/system/bitsrun.service` 指定绝对配置路径，然后 `sudo systemctl start bitsrun`
 - Cargo：`cargo install bitsrun`
-- 直接下载二进制：从 [Releases](https://github.com/spencerwooo/bitsrun-rs/releases/latest) 下载，`tar -xvf <file>.tar.gz` 解压后将 `bitsrun` 移动到 `PATH`
+- 直接下载二进制：从 [Releases](https://github.com/Bigzhangbig/bitsrun-rs/releases/latest) 下载，`tar -xvf <file>.tar.gz` 解压后将 `bitsrun` 移动到 `PATH`
 
 ## 使用
 
@@ -124,6 +123,15 @@ Linux / macOS 上需将此文件权限设为 `600`，否则 `bitsrun` 将拒绝�
 ```console
 $ chmod 600 <path/to/bit-user.json>
 ```
+
+## 致谢
+
+本项目复刻（Fork）自 [spencerwooo/bitsrun-rs](https://github.com/spencerwooo/bitsrun-rs)。
+
+- **原作者**：[Spencer Woo](https://github.com/spencerwooo)
+- **开源协议**：MIT
+
+特别感谢原作者在北理工校园网客户端核心逻辑和实现方案上的贡献。
 
 ## 相关项目
 
