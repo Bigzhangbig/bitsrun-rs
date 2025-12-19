@@ -1,12 +1,5 @@
 # bitsrun
-## Credits
 
-This project is a fork of [spencerwooo/bitsrun-rs](https://github.com/spencerwooo/bitsrun-rs).
-
-- **Original Author**: [Spencer Woo](https://github.com/spencerwooo)
-- **Original License**: MIT
-
-Special thanks to the original author for the excellent work on the core logic and implementation of this BIT campus network client.
 English | [简体中文](README.zh-CN.md)
 
 [![GitHub Workflow Status (CI)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/ci.yml?logo=github&label=ci&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/ci.yml)
@@ -168,6 +161,17 @@ bitsrun: list of possible config paths
 ```console
 $ chmod 600 <path/to/bit-user.json>
 ```
+
+
+## Credits
+
+This project is a fork of [spencerwooo/bitsrun-rs](https://github.com/spencerwooo/bitsrun-rs).
+
+- **Original Author**: [Spencer Woo](https://github.com/spencerwooo)
+- **Original License**: MIT
+
+Special thanks to the original author for the excellent work on the core logic and implementation of this BIT campus network client.
+
 
 ## Related
 
