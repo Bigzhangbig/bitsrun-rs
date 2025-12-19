@@ -15,9 +15,6 @@ jobs:
     name: Release for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
 
-    # Prevent job from running on forks
-    if: ${{ !github.event.repository.fork }}
-
     strategy:
       fail-fast: false
       matrix:
