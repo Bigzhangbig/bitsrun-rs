@@ -1,0 +1,48 @@
+name: 'DevContainer 预构建'
+
+on:
+  push:
+    branches: [main, add/codespaces]
+    paths:
+      - '.devcontainer/**'
+      - '.github/workflows/prebuilds.yml'
+  workflow_dispatch:
+
+jobs:
+  pre-build:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: '📥 检出代码'
+        uses: actions/checkout@v4
+
+      - name: '🔡 准备镜像名称'
+        id: prep
+        run: |
+          REPO="bigzhangbig/bitsrun-rs"
+          echo "repo=${REPO,,}" >> $GITHUB_OUTPUT
+          echo "IMAGE_REPO=${REPO,,}" >> $GITHUB_ENV
+
+      - name: '🔧 设置 Docker Buildx'
+        uses: docker/setup-buildx-action@v3
+
+      - name: '🔐 登录 GHCR'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: '📦 构建并推送镜像'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: .devcontainer/rust/Dockerfile
+          # 使用 steps.<id>.outputs.<var> 访问，VS Code 不再报错
+          cache-from: type=registry,ref=ghcr.io/${{ steps.prep.outputs.repo }}/dev:cache
+          cache-to: type=registry,ref=ghcr.io/${{ steps.prep.outputs.repo }}/dev:cache,mode=max
+          push: true
+          tags: |
+            ghcr.io/${{ steps.prep.outputs.repo }}/dev:latest

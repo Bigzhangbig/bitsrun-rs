@@ -6,3 +6,12 @@ linker = 'aarch64-linux-gnu-gcc'
 
 [target.aarch64-unknown-linux-musl]
 linker = 'aarch64-linux-musl-gcc'
+
+# 针对 Linux x86_64 平台使用 clang + lld 加速编译
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+# 针对 Linux aarch64 平台 (bitsrun-rs 涉及)
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-linux-gnu-gcc" # 对应 .cargo/config.toml 中的设置

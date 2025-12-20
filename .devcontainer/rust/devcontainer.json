@@ -1,7 +1,7 @@
 {
   "name": "bitsrun-rs Prebuilt DevEnv",
   // 修改为你的 GHCR 镜像地址
-  "image": "ghcr.io/Bigzhangbig/bitsrun-rs/dev:latest",
+  "image": "ghcr.io/bigzhangbig/bitsrun-rs/dev:latest",
   "remoteUser": "vscode",
   "containerEnv": {
     "CC": "clang",
