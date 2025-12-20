@@ -12,8 +12,9 @@ jobs:
   pre-build:
     runs-on: ubuntu-latest
     permissions:
-      packages: write
       contents: read
+      packages: write
+      id-token: write
     steps:
       - name: '📥 检出代码'
         uses: actions/checkout@v4
@@ -21,9 +22,8 @@ jobs:
       - name: '🔡 准备镜像名称'
         id: prep
         run: |
-          REPO="bigzhangbig/bitsrun-rs"
+          REPO="${{ github.repository }}"
           echo "repo=${REPO,,}" >> $GITHUB_OUTPUT
-          echo "IMAGE_REPO=${REPO,,}" >> $GITHUB_ENV
 
       - name: '🔧 设置 Docker Buildx'
         uses: docker/setup-buildx-action@v3
@@ -36,7 +36,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: '📦 构建并推送镜像'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: .devcontainer/rust/Dockerfile
