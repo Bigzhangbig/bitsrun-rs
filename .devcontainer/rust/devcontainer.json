@@ -26,6 +26,5 @@
       ]
     }
   },
-  "postCreateCommand": "rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-gnu",
-  "postStartCommand": "rustc --version && clang --version"
+  "postStartCommand": "rustc --version && clang --version && rustup show"
 }
