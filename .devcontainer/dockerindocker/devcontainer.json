@@ -1,0 +1,36 @@
+{
+    "name": "Docker & Chinese Environment",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu", // 使用精简的 Ubuntu 基础镜像
+    "features": {
+        // 安装 Docker-in-Docker 插件，允许在 Codespace 里编译和运行 Docker
+        "ghcr.io/devcontainers/features/docker-in-docker:1": {
+            "version": "latest",
+            "moby": true
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.vscode-docker", // Docker 插件
+                "MS-CEINTL.vscode-language-pack-zh-hans" // VS Code 中文语言包
+            ],
+            "settings": {
+                "terminal.integrated.env.linux": {
+                    "LANG": "zh_CN.UTF-8",
+                    "LANGUAGE": "zh_CN:zh",
+                    "LC_ALL": "zh_CN.UTF-8"
+                }
+            }
+        }
+    },
+    // 配置容器环境变量
+    "remoteEnv": {
+        "LANG": "zh_CN.UTF-8",
+        "LANGUAGE": "zh_CN:zh",
+        "LC_ALL": "zh_CN.UTF-8"
+    },
+    // 安装中文语言包及相关依赖
+    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y locales fonts-wqy-zenhei && sudo locale-gen zh_CN.UTF-8 && sudo update-locale LANG=zh_CN.UTF-8",
+    
+    "remoteUser": "vscode"
+}
