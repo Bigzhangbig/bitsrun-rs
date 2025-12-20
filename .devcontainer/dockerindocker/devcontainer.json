@@ -1,6 +1,6 @@
 {
     "name": "Docker & Chinese Environment",
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu", // 使用精简的 Ubuntu 基础镜像
+    "image": "mcr.microsoft.com/devcontainers/base:jammy", // 使用精简的 Ubuntu 基础镜像
     "features": {
         // 安装 Docker-in-Docker 插件，允许在 Codespace 里编译和运行 Docker
         "ghcr.io/devcontainers/features/docker-in-docker:1": {
