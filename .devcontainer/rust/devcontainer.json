@@ -1,0 +1,31 @@
+{
+  "name": "bitsrun-rs Prebuilt DevEnv",
+  // 修改为你的 GHCR 镜像地址
+  "image": "ghcr.io/Bigzhangbig/bitsrun-rs/dev:latest",
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "CC": "clang",
+    "CXX": "clang++",
+    "TZ": "Asia/Shanghai",
+    "LANG": "zh_CN.UTF-8"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "rust-analyzer.check.command": "clippy",
+        "lldb.executable": "lldb",
+        "clangd.path": "clangd"
+      },
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "vadimcn.vscode-lldb", // 必须，利用 LLVM 调试 Rust
+        "tamasfe.even-better-toml",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "MS-CEINTL.vscode-language-pack-zh-hans"
+      ]
+    }
+  },
+  "postCreateCommand": "rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-gnu",
+  "postStartCommand": "rustc --version && clang --version"
+}
