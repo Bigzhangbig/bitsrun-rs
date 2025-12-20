@@ -95,7 +95,7 @@ RUN set -eux; \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-COPY p10k.zsh /tmp/p10k.zsh
+COPY .devcontainer/rust/p10k.zsh /tmp/p10k.zsh
 
 # 3. 预装 oh-my-zsh、Powerlevel10k 和常用插件
 RUN usermod -s /usr/bin/zsh vscode
@@ -114,7 +114,7 @@ RUN su - vscode -c '\
     { echo ""; echo "# 中文环境配置"; echo "export LANG=zh_CN.UTF-8"; echo "export LC_ALL=zh_CN.UTF-8"; echo "export LANGUAGE=zh_CN:en_US"; } >> ~/.zshrc \
     '
 
-COPY --chown=vscode:vscode p10k.zsh /home/vscode/.p10k.zsh
+COPY --chown=vscode:vscode .devcontainer/rust/p10k.zsh /home/vscode/.p10k.zsh
 
 # 4. 安装 Rust 工具链
 ARG RUST_VERSION=stable
