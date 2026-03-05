@@ -46,15 +46,14 @@ This fork (`Bigzhangbig/bitsrun-rs`) introduces several enhancements over the or
 - Edit `/lib/systemd/system/bitsrun.service` to specify absolute config path
 - Then start service with `sudo systemctl start bitsrun`
 
-#### Cargo
-
-- `cargo install bitsrun`
-
 #### Download binary
 
 - Download the latest binary from [Releases](https://github.com/Bigzhangbig/bitsrun-rs/releases/latest).
 - Uncompress file: `tar -xvf <file>.tar.gz`
 - Move binary to `$PATH`, such as: `mv <file>/bitsrun ~/.local/bin/`
+
+> [!NOTE]
+> `cargo install bitsrun` 仍将安装由原作者维护的官方版本。如需使用本 Fork 分支的功能，请使用上述安装方式。
 
 ## Usage
 
