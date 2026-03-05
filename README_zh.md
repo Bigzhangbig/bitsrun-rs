@@ -4,7 +4,7 @@
 
 [![GitHub Workflow Status (CI)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/ci.yml?logo=github&label=ci&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/ci.yml)
 [![GitHub Workflow Status (Release)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/release.yml?logo=github&label=release&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/release.yml)
-[![GitHub release](https://img.shields.io/github/v/release/Bigzhangbig/bitsrun-rs?logo=github&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/releases/latest)
+[![GitHub release](https://img.shields.io/github/v/release/Bigzhangbig/bitsrun-rs?include_prereleases&logo=github&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/releases/latest)
 
 🌐 针对北京理工大学 (BIT) 网关 (10.0.0.55) 的无头登录与注销命令行工具，现已支持 Rust。
 
