@@ -190,7 +190,7 @@ pub(crate) async fn check_connectivity(client: &Client) -> Result<Option<String>
         let sub = &body[pos..];
         if let Some(ac_pos) = sub.find("ac_id=") {
             let ac_val = sub[ac_pos + 6..]
-                .split(|c: char| !c.is_digit(10))
+                .split(|c: char| !c.is_ascii_digit())
                 .next()
                 .unwrap_or("43");
             return Ok(Some(ac_val.to_string()));
@@ -351,8 +351,8 @@ impl SrunClient {
             ("action", "login"),
             ("username", self.username.as_str()),
             ("password", password_encoded.as_str()),
-            ("chksum", &chksum.as_str()),
-            ("info", &info.as_str()),
+            ("chksum", chksum.as_str()),
+            ("info", info.as_str()),
             ("ac_id", self.ac_id.as_str()),
             ("ip", real_ip_str.as_str()),
             ("type", SRUN_TYPE),
