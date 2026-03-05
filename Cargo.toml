@@ -11,6 +11,7 @@ readme = "README.md"
 keywords = ["bit", "bitsrun", "srun", "srun-client", "srun-login"]
 categories = ["command-line-utilities"]
 authors = ["Bigzhangbig"]
+publish = false
 
 [dependencies]
 reqwest = { version = "0.11", features = [
