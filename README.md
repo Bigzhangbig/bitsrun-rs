@@ -1,23 +1,44 @@
 # bitsrun
 
-[![GitHub Workflow Status (CI)](https://img.shields.io/github/actions/workflow/status/spencerwooo/bitsrun-rs/ci.yml?logo=github&label=ci&labelColor=%23223227)](https://github.com/spencerwooo/bitsrun-rs/actions/workflows/ci.yml)
-[![GitHub Workflow Status (Release)](https://img.shields.io/github/actions/workflow/status/spencerwooo/bitsrun-rs/release.yml?logo=github&label=release&labelColor=%23223227)](https://github.com/spencerwooo/bitsrun-rs/actions/workflows/release.yml)
-[![GitHub release](https://img.shields.io/github/v/release/spencerwooo/bitsrun-rs?logo=github&labelColor=%23223227)](https://github.com/spencerwooo/bitsrun-rs/releases/latest)
+[![GitHub Workflow Status (CI)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/ci.yml?logo=github&label=ci&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/ci.yml)
+[![GitHub Workflow Status (Release)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/release.yml?logo=github&label=release&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/release.yml)
+[![GitHub release](https://img.shields.io/github/v/release/Bigzhangbig/bitsrun-rs?logo=github&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/releases/latest)
 [![Crates.io](https://img.shields.io/crates/d/bitsrun?logo=rust&labelColor=%23223227&color=%23dec867)](https://crates.io/crates/bitsrun)
 
 🌐 A headless login and logout CLI for gateway (10.0.0.55) at BIT, now in Rust.
 
+### ✨ Fork Highlights
+
+This fork (`Bigzhangbig/bitsrun-rs`) introduces several enhancements over the original project, **developed with the assistance of Gemini CLI (AI)**:
+
+- **🚀 Native macOS Wi-Fi Monitoring**: On macOS, the `keep-alive` daemon now utilizes the `SystemConfiguration` and `IOKit` frameworks to monitor network changes and system power events in real-time.
+  - **Instant Re-login**: Automatically triggers a login attempt the moment you connect to a new Wi-Fi network or wake your Mac from sleep.
+  - **Roaming Support**: Detects physical AP switching (BSSID change) even if the SSID remains the same (e.g., moving between buildings with `BIT-Web`), ensuring your session stays active without waiting for the polling interval.
+  - **Zero-Latency & Low Power**: Uses event-driven system callbacks instead of constant polling.
+- **🛡️ Robust Protocol Alignment**: Improved IP detection and auto-correction. If the gateway's detected IP differs from the local one, the client automatically aligns and re-authenticates to ensure success.
+
 ![CleanShot 2023-12-04 at 16 47 26@2x](https://github.com/spencerwooo/bitsrun-rs/assets/32114380/23343ba1-961c-41aa-b4b6-c09da93fb699)
+
+> [!IMPORTANT]
+> **AI-Assisted Development**: Significant portions of the logic in this fork, especially the hardware monitoring and protocol refinements, were generated or refactored using **Gemini CLI**. While extensively tested, users should be aware of the AI-driven nature of these changes.
+
+## Disclaimer
+
+**本软件仅供学习和研究使用，严禁用于任何非法用途。**
+
+- **风险自担**：开发者（包括 AI 助手）不对因使用本软件导致的任何账户封禁、网络中断、数据丢失或法律纠纷承担责任。
+- **不保证性**：由于校园网网关协议可能随时更新，本软件不保证在所有时间、所有环境下均能正常工作。
+- **AI 生成代码**：本项目部分核心功能由 AI 生成，虽经人工验证，但仍可能存在边界情况下的异常行为，请根据实际情况谨慎使用。
 
 ## Install
 
 #### One-line install (Linux / macOS, recommended)
 
-- `curl -fsSL https://cdn.jsdelivr.net/gh/spencerwooo/bitsrun-rs@main/install.sh | sh -`
+- `curl -fsSL https://cdn.jsdelivr.net/gh/Bigzhangbig/bitsrun-rs@main/install.sh | sh -`
 
 #### Ubuntu / Debian (recommended for `systemd` support)
 
-- Download the latest `.deb` package from [Releases](https://github.com/spencerwooo/bitsrun-rs/releases/latest).
+- Download the latest `.deb` package from [Releases](https://github.com/Bigzhangbig/bitsrun-rs/releases/latest).
 - `sudo apt install </path/to/file>.deb`
 
 **If `bitsrun.service` systemd service required:**
@@ -31,7 +52,7 @@
 
 #### Download binary
 
-- Download the latest binary from [Releases](https://github.com/spencerwooo/bitsrun-rs/releases/latest).
+- Download the latest binary from [Releases](https://github.com/Bigzhangbig/bitsrun-rs/releases/latest).
 - Uncompress file: `tar -xvf <file>.tar.gz`
 - Move binary to `$PATH`, such as: `mv <file>/bitsrun ~/.local/bin/`
 

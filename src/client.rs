@@ -1,4 +1,5 @@
 use std::net::IpAddr;
+use std::time::Duration;
 
 use crate::xencode::fkbase64;
 use crate::xencode::xencode;
@@ -17,6 +18,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
 use sha1::Sha1;
+use log::{info, debug};
 
 /// Constants used for the /srun_portal endpoint
 pub const SRUN_PORTAL: &str = "http://10.0.0.55";
@@ -155,6 +157,46 @@ async fn get_acid_by_url(client: &Client, url: &str) -> Result<String> {
     Ok(ac_id.1)
 }
 
+/// Check if the current connection is truly online or intercepted.
+/// Returns Ok(None) if truly online (204 received).
+/// Returns Ok(Some(ac_id)) if intercepted by captive portal.
+/// Returns Err if network is not reachable at all.
+pub(crate) async fn check_connectivity(client: &Client) -> Result<Option<String>> {
+    // Use a domestic connectivity check endpoint for better stability in China
+    let target = "http://connect.rom.miui.com/generate_204";
+    
+    let resp = client.get(target)
+        .timeout(Duration::from_secs(3))
+        .send()
+        .await?;
+
+    if resp.status().as_u16() == 204 {
+        // Truly online
+        return Ok(None);
+    }
+
+    // If not 204, we are likely intercepted. Try to get ac_id from redirect or body.
+    let final_url = resp.url().to_string();
+    if let Ok(parsed_url) = url::Url::parse(&final_url) {
+        if let Some((_, ac_id)) = parsed_url.query_pairs().find(|(k, _)| k == "ac_id") {
+            return Ok(Some(ac_id.into_owned()));
+        }
+    }
+
+    // Fallback: search for ac_id in the response body (for WISPr XML like responses)
+    let body = resp.text().await.unwrap_or_default();
+    if let Some(pos) = body.find("index_") {
+        let sub = &body[pos..];
+        if let Some(ac_pos) = sub.find("ac_id=") {
+            let ac_val = sub[ac_pos + 6..].split(|c: char| !c.is_digit(10)).next().unwrap_or("43");
+            return Ok(Some(ac_val.to_string()));
+        }
+    }
+
+    // Default to a sensible ac_id if intercepted but can't find specific id
+    Ok(Some("43".to_string()))
+}
+
 /// Get the ac_id of the current device
 async fn get_acid(client: &Client) -> Result<String> {
     // Try to visit `CAPTIVE_PORTAL_TEST`.
@@ -194,6 +236,7 @@ pub struct SrunPortalResponse {
 pub struct SrunChallenge {
     // the only useful field that must be present
     pub challenge: String,
+    pub client_ip: Option<IpAddr>,
 }
 
 /// SRUN client
@@ -261,12 +304,13 @@ impl SrunClient {
         }
 
         // construct checksum and crypto encodings
-        let token = self.get_challenge(verbose).await?;
+        let (token, real_ip) = self.get_challenge(verbose).await?;
+        let real_ip_str = real_ip.to_string();
 
         let chksum_data = json!({
             "username": self.username.clone(),
             "password": self.password.clone(),
-            "ip": self.ip.to_string(),
+            "ip": real_ip_str,
             "acid": self.ac_id.clone(),
             "enc_ver": String::from("srun_bx1"),
         });
@@ -282,7 +326,7 @@ impl SrunClient {
         let chksum = {
             let chk = format!(
                 "{0}{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}{0}{7}",
-                &token, &self.username, &hmd5, &self.ac_id, &self.ip, &SRUN_N, &SRUN_TYPE, &info
+                &token, &self.username, &hmd5, &self.ac_id, &real_ip_str, &SRUN_N, &SRUN_TYPE, &info
             );
             let mut hasher = Sha1::new();
             hasher.update(chk);
@@ -299,11 +343,13 @@ impl SrunClient {
             ("chksum", &chksum.as_str()),
             ("info", &info.as_str()),
             ("ac_id", self.ac_id.as_str()),
-            ("ip", &self.ip.to_string()),
+            ("ip", real_ip_str.as_str()),
             ("type", SRUN_TYPE),
             ("n", SRUN_N),
         ];
         let url = format!("{}/cgi-bin/srun_portal", SRUN_PORTAL);
+
+        debug!("Portal Request: {}?{:?}", url, params);
 
         // send login request
         let resp = self
@@ -314,6 +360,7 @@ impl SrunClient {
             .await
             .with_context(|| "failed to send request when logging in")?;
         let raw_text = resp.text().await?;
+        debug!("Portal Output: {}", raw_text);
 
         if verbose {
             println!(
@@ -434,41 +481,88 @@ impl SrunClient {
             .with_context(|| format!("failed to parse malformed logout response:\n  {}", raw_json))
     }
 
-    async fn get_challenge(&self, verbose: bool) -> Result<String> {
-        let params = [
-            ("callback", "jsonp"),
-            ("username", self.username.as_str()),
-            ("ip", &self.ip.to_string()),
-        ];
-        let url = format!("{}/cgi-bin/get_challenge", SRUN_PORTAL);
-
-        let resp = self
-            .http_client
-            .get(&url)
-            .query(&params)
-            .send()
-            .await
-            .with_context(|| "failed to get challenge")?;
-        let raw_text = resp.text().await?;
-
-        if verbose {
-            println!(
-                "{} challenge response from portal:\n{}",
-                "bitsrun:".if_supports_color(Stdout, |t| t.blue()),
-                raw_text.if_supports_color(Stdout, |t| t.dimmed())
-            );
+    /// Ensure the client is online by checking connectivity and performing login if needed.
+    pub async fn ensure_online(&self) -> Result<()> {
+        match check_connectivity(&self.http_client).await {
+            Ok(None) => {
+                debug!("Client is already online.");
+                return Ok(());
+            }
+            Ok(Some(ac_id)) => {
+                info!("Client intercepted (ac_id={}), initiating smart login...", ac_id);
+            }
+            Err(_) => {
+                info!("Network unreachable, waiting for interface to be ready...");
+            }
         }
 
-        if raw_text.len() < 8 {
-            bail!("challenge response too short: `{}`", raw_text)
+        // Attempt login with up to 5 retries for rapid recovery
+        for i in 1..=5 {
+            match self.login(true, false).await {
+                Ok(resp) if resp.error == "ok" || resp.error == "ip_already_online_error" => {
+                    tokio::time::sleep(Duration::from_millis(1000)).await;
+                    if check_connectivity(&self.http_client).await.is_ok() {
+                        info!("Smart login success (attempt {}).", i);
+                        return Ok(());
+                    }
+                }
+                _ => {
+                    debug!("Login attempt {} failed, retrying...", i);
+                }
+            }
+            tokio::time::sleep(Duration::from_millis(1500)).await;
         }
-        let raw_json = &raw_text[6..raw_text.len() - 1];
-        let parsed_json = serde_json::from_str::<SrunChallenge>(raw_json).with_context(|| {
-            format!(
-                "failed to parse malformed get_challenge response:\n  {}",
-                raw_json
-            )
-        })?;
-        Ok(parsed_json.challenge)
+        bail!("Failed to ensure online after multiple attempts")
+    }
+
+    async fn get_challenge(&self, _verbose: bool) -> Result<(String, IpAddr)> {
+        let mut request_ip = self.ip;
+        let mut challenge = String::new();
+        
+        // Try up to 2 times to align with gateway's detected IP
+        for attempt in 1..=2 {
+            let ip_str = request_ip.to_string();
+            let params = [
+                ("callback", "jsonp"),
+                ("username", self.username.as_str()),
+                ("ip", &ip_str),
+            ];
+            let url = format!("{}/cgi-bin/get_challenge", SRUN_PORTAL);
+
+            debug!("Challenge Request (attempt {}): {}?{:?}", attempt, url, params);
+
+            let resp = self
+                .http_client
+                .get(&url)
+                .query(&params)
+                .send()
+                .await
+                .with_context(|| "failed to get challenge")?;
+            let raw_text = resp.text().await?;
+            debug!("Challenge Output (attempt {}): {}", attempt, raw_text);
+
+            if raw_text.len() < 8 {
+                bail!("challenge response too short: `{}`", raw_text)
+            }
+            let raw_json = &raw_text[6..raw_text.len() - 1];
+            let parsed_json = serde_json::from_str::<SrunChallenge>(raw_json).with_context(|| {
+                format!("failed to parse malformed get_challenge response:\n  {}", raw_json)
+            })?;
+
+            challenge = parsed_json.challenge;
+
+            if let Some(detected_ip) = parsed_json.client_ip {
+                if detected_ip != request_ip {
+                    info!("IP Mismatch! Requested: {}, Gateway saw: {}. Re-fetching challenge with correct IP...", request_ip, detected_ip);
+                    request_ip = detected_ip;
+                    continue; // Fetch again with the correct IP
+                }
+            }
+            
+            // If we are here, either IP matches or gateway didn't return client_ip
+            return Ok((challenge, request_ip));
+        }
+
+        Ok((challenge, request_ip))
     }
 }

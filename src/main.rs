@@ -2,6 +2,7 @@ mod cli;
 mod client;
 mod config;
 mod daemon;
+mod monitor;
 mod tables;
 mod user;
 mod xencode;
@@ -88,8 +89,7 @@ async fn cli() -> Result<()> {
 
         Some(Commands::KeepAlive(daemon_args)) => {
             let config_path = daemon_args.config.to_owned();
-            let daemon = SrunDaemon::new(config_path)?;
-            daemon.start(http_client).await?;
+            SrunDaemon::run(config_path).await?;
         }
 
         Some(Commands::ConfigPaths) => print_config_paths(),

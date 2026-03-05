@@ -82,7 +82,7 @@ download_bitsrun() {
   fi
   need_cmd grep
 
-  local _releases_url="https://api.github.com/repos/spencerwooo/bitsrun-rs/releases/latest"
+  local _releases_url="https://api.github.com/repos/Bigzhangbig/bitsrun-rs/releases/latest"
   local _releases
   case "$_dld" in
   curl) _releases="$(curl -sL "$_releases_url")" ||
@@ -93,7 +93,7 @@ download_bitsrun() {
 
   local _package_url
   _package_url="$(echo "$_releases" | grep "browser_download_url" | cut -d '"' -f 4 | grep "$_arch")" ||
-    err "bitsrun has not yet been packaged for your architecture ($_arch), please file an issue at https://github.com/spencerwooo/bitsrun-rs/issues"
+    err "bitsrun has not yet been packaged for your architecture ($_arch), please file an issue at https://github.com/Bigzhangbig/bitsrun-rs/issues"
 
   local _ext
   case "$_package_url" in

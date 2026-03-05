@@ -4,13 +4,13 @@ description = "A headless login and logout CLI for 10.0.0.55 at BIT"
 version = "0.5.0"
 edition = "2021"
 license = "MIT"
-homepage = "https://github.com/spencerwooo/bitsrun-rs"
-documentation = "https://github.com/spencerwooo/bitsrun-rs"
-repository = "https://github.com/spencerwooo/bitsrun-rs"
+homepage = "https://github.com/Bigzhangbig/bitsrun-rs"
+documentation = "https://github.com/Bigzhangbig/bitsrun-rs"
+repository = "https://github.com/Bigzhangbig/bitsrun-rs"
 readme = "README.md"
 keywords = ["bit", "bitsrun", "srun", "srun-client", "srun-login"]
 categories = ["command-line-utilities"]
-authors = ["Spencer Woo <spencer.woo@outlook.com>"]
+authors = ["Bigzhangbig"]
 
 [dependencies]
 reqwest = { version = "0.11", features = [
@@ -38,11 +38,18 @@ chrono = "0.4"
 log = "0.4"
 pretty_env_logger = "0.5"
 enable-ansi-support = "0.2"
+netwatcher = "0.4.1"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-foundation-sys = "0.8.7"
+io-kit-sys = "0.5.0"
+mach2 = "0.6.0"
+system-configuration = "0.7.0"
 
 [profile.release]
 strip = "symbols"
 
 [package.metadata.deb]
-copyright = "2025 Spencer Woo"
+copyright = "2025 Bigzhangbig"
 maintainer-scripts = "debian/"
 systemd-units = { enable = true, start = false }
