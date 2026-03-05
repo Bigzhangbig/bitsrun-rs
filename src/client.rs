@@ -14,11 +14,11 @@ use owo_colors::OwoColorize;
 use owo_colors::Stream::Stdout;
 use reqwest::Client;
 
+use log::{debug, info};
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
 use sha1::Sha1;
-use log::{info, debug};
 
 /// Constants used for the /srun_portal endpoint
 pub const SRUN_PORTAL: &str = "http://10.0.0.55";
@@ -164,8 +164,9 @@ async fn get_acid_by_url(client: &Client, url: &str) -> Result<String> {
 pub(crate) async fn check_connectivity(client: &Client) -> Result<Option<String>> {
     // Use a domestic connectivity check endpoint for better stability in China
     let target = "http://connect.rom.miui.com/generate_204";
-    
-    let resp = client.get(target)
+
+    let resp = client
+        .get(target)
         .timeout(Duration::from_secs(3))
         .send()
         .await?;
@@ -188,7 +189,10 @@ pub(crate) async fn check_connectivity(client: &Client) -> Result<Option<String>
     if let Some(pos) = body.find("index_") {
         let sub = &body[pos..];
         if let Some(ac_pos) = sub.find("ac_id=") {
-            let ac_val = sub[ac_pos + 6..].split(|c: char| !c.is_digit(10)).next().unwrap_or("43");
+            let ac_val = sub[ac_pos + 6..]
+                .split(|c: char| !c.is_digit(10))
+                .next()
+                .unwrap_or("43");
             return Ok(Some(ac_val.to_string()));
         }
     }
@@ -326,7 +330,14 @@ impl SrunClient {
         let chksum = {
             let chk = format!(
                 "{0}{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}{0}{7}",
-                &token, &self.username, &hmd5, &self.ac_id, &real_ip_str, &SRUN_N, &SRUN_TYPE, &info
+                &token,
+                &self.username,
+                &hmd5,
+                &self.ac_id,
+                &real_ip_str,
+                &SRUN_N,
+                &SRUN_TYPE,
+                &info
             );
             let mut hasher = Sha1::new();
             hasher.update(chk);
@@ -489,7 +500,10 @@ impl SrunClient {
                 return Ok(());
             }
             Ok(Some(ac_id)) => {
-                info!("Client intercepted (ac_id={}), initiating smart login...", ac_id);
+                info!(
+                    "Client intercepted (ac_id={}), initiating smart login...",
+                    ac_id
+                );
             }
             Err(_) => {
                 info!("Network unreachable, waiting for interface to be ready...");
@@ -518,7 +532,7 @@ impl SrunClient {
     async fn get_challenge(&self, _verbose: bool) -> Result<(String, IpAddr)> {
         let mut request_ip = self.ip;
         let mut challenge = String::new();
-        
+
         // Try up to 2 times to align with gateway's detected IP
         for attempt in 1..=2 {
             let ip_str = request_ip.to_string();
@@ -529,7 +543,10 @@ impl SrunClient {
             ];
             let url = format!("{}/cgi-bin/get_challenge", SRUN_PORTAL);
 
-            debug!("Challenge Request (attempt {}): {}?{:?}", attempt, url, params);
+            debug!(
+                "Challenge Request (attempt {}): {}?{:?}",
+                attempt, url, params
+            );
 
             let resp = self
                 .http_client
@@ -545,9 +562,13 @@ impl SrunClient {
                 bail!("challenge response too short: `{}`", raw_text)
             }
             let raw_json = &raw_text[6..raw_text.len() - 1];
-            let parsed_json = serde_json::from_str::<SrunChallenge>(raw_json).with_context(|| {
-                format!("failed to parse malformed get_challenge response:\n  {}", raw_json)
-            })?;
+            let parsed_json =
+                serde_json::from_str::<SrunChallenge>(raw_json).with_context(|| {
+                    format!(
+                        "failed to parse malformed get_challenge response:\n  {}",
+                        raw_json
+                    )
+                })?;
 
             challenge = parsed_json.challenge;
 
@@ -558,7 +579,7 @@ impl SrunClient {
                     continue; // Fetch again with the correct IP
                 }
             }
-            
+
             // If we are here, either IP matches or gateway didn't return client_ip
             return Ok((challenge, request_ip));
         }

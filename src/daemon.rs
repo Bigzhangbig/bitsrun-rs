@@ -2,13 +2,13 @@ use crate::client::SrunClient;
 use crate::config;
 use crate::monitor::start_hardware_monitor;
 
-use std::fs;
-use std::time::Duration;
 use anyhow::Context;
 use anyhow::Result;
-use log::{info, debug};
+use log::{debug, info};
 use owo_colors::OwoColorize;
 use owo_colors::Stream::Stdout;
+use std::fs;
+use std::time::Duration;
 use tokio::signal::ctrl_c;
 
 #[derive(serde::Deserialize)]
@@ -37,13 +37,21 @@ impl SrunDaemon {
             Some(http_client),
             None,
             Some(daemon.dm),
-        ).await?;
+        )
+        .await?;
 
-        let poll_interval = if daemon.poll_interval == 0 { 3600 } else { daemon.poll_interval };
+        let poll_interval = if daemon.poll_interval == 0 {
+            3600
+        } else {
+            daemon.poll_interval
+        };
         let mut srun_ticker = tokio::time::interval(Duration::from_secs(poll_interval));
         let mut hardware_events = start_hardware_monitor();
 
-        info!("Starting smart daemon for {} (interval={}s)", daemon.username, poll_interval);
+        info!(
+            "Starting smart daemon for {} (interval={}s)",
+            daemon.username, poll_interval
+        );
 
         loop {
             tokio::select! {
