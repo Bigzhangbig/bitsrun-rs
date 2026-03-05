@@ -50,6 +50,6 @@ system-configuration = "0.7.0"
 strip = "symbols"
 
 [package.metadata.deb]
-copyright = "2025 Bigzhangbig"
+copyright = "2026 Bigzhangbig"
 maintainer-scripts = "debian/"
 systemd-units = { enable = true, start = false }
