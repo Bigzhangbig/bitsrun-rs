@@ -1,6 +1,6 @@
 # bitsrun
 
-[简体中文](README_zh.md)
+English  |  [简体中文](README_zh.md)
 
 [![GitHub Workflow Status (CI)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/ci.yml?logo=github&label=ci&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/ci.yml)
 [![GitHub Workflow Status (Release)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/release.yml?logo=github&label=release&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/release.yml)
@@ -92,6 +92,52 @@ $ bitsrun keep-alive
 
 > [!NOTE]
 > Use available system service managers to run `bitsrun keep-alive` as a daemon. (e.g., `systemd` for Linux, `launchd` for macOS, and Windows Service for Windows).
+
+### 🍏 Autostart on macOS (LaunchAgent)
+
+To make `bitsrun keep-alive` start automatically when you log in to macOS:
+
+1. Find your `bitsrun` binary path:
+```bash
+which bitsrun
+# Example output: /Users/harvey/.local/bin/bitsrun
+```
+
+2. Create a plist file at `~/Library/LaunchAgents/com.bigzhangbig.bitsrun.plist` (replace `/path/to/bitsrun` and `your-username` with your actual info):
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bigzhangbig.bitsrun</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/path/to/bitsrun</string>
+        <string>keep-alive</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/your-username/Library/Logs/bitsrun.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/your-username/Library/Logs/bitsrun.log</string>
+</dict>
+</plist>
+```
+
+3. Load the service:
+```bash
+launchctl load ~/Library/LaunchAgents/com.bigzhangbig.bitsrun.plist
+```
+
+3. Check logs:
+```bash
+tail -f ~/Library/Logs/bitsrun.log
+```
 
 ## Available commands
 

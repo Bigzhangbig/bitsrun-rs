@@ -1,6 +1,6 @@
 # bitsrun
 
-[English](README.md)
+[English](README.md)  |  简体中文
 
 [![GitHub Workflow Status (CI)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/ci.yml?logo=github&label=ci&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/ci.yml)
 [![GitHub Workflow Status (Release)](https://img.shields.io/github/actions/workflow/status/Bigzhangbig/bitsrun-rs/release.yml?logo=github&label=release&labelColor=%23223227)](https://github.com/Bigzhangbig/bitsrun-rs/actions/workflows/release.yml)
@@ -72,9 +72,9 @@ bitsrun: <ip> 已注销
 
 ```console
 $ bitsrun status
-bitsrun: <ip> (<用户名>) 在线
+bitsrun: <ip> (<username>) is online
 ┌────────────────┬───────────────┬───────────────┬─────────┐
-│ 已用流量       │ 在线时长       │ 账户余额      │ 钱包    │
+│ Traffic Used   │ Online Time   │ User Balance  │ Wallet  │
 ├────────────────┼───────────────┼───────────────┼─────────┤
 │ 188.10 GiB     │ 2 months      │ 10.00         │ 0.00    │
 └────────────────┴───────────────┴───────────────┴─────────┘
@@ -84,14 +84,60 @@ bitsrun: <ip> (<用户名>) 在线
 
 ```console
 $ bitsrun keep-alive
- INFO  bitsrun::daemon > starting daemon (<用户名>) with polling interval=3600s
- INFO  bitsrun::daemon > <ip> (<用户名>): login success,
+ INFO  bitsrun::daemon > starting daemon (<username>) with polling interval=3600s
+ INFO  bitsrun::daemon > <ip> (<username>): login success,
  ...
- ^C INFO  bitsrun::daemon > <用户名>: 优雅退出
+ ^C INFO  bitsrun::daemon > <username>: gracefully exiting
 ```
 
 > [!NOTE]
 > 使用可用的系统服务管理器（如 Linux 的 `systemd`、macOS 的 `launchd` 或 Windows 服务）将 `bitsrun keep-alive` 作为守护进程运行。
+
+### 🍏 macOS 开机自启动配置 (LaunchAgent)
+
+为了在您登录 macOS 时自动启动 `bitsrun keep-alive`：
+
+1. 查找您的 `bitsrun` 二进制文件路径：
+```bash
+which bitsrun
+# 示例输出：/Users/harvey/.local/bin/bitsrun
+```
+
+2. 在 `~/Library/LaunchAgents/com.bigzhangbig.bitsrun.plist` 创建一个 plist 文件（请将 `/path/to/bitsrun` 和 `你的用户名` 替换为实际信息）：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bigzhangbig.bitsrun</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/path/to/bitsrun</string>
+        <string>keep-alive</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/你的用户名/Library/Logs/bitsrun.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/你的用户名/Library/Logs/bitsrun.log</string>
+</dict>
+</plist>
+```
+
+3. 加载并启动服务：
+```bash
+launchctl load ~/Library/LaunchAgents/com.bigzhangbig.bitsrun.plist
+```
+
+3. 查看运行日志：
+```bash
+tail -f ~/Library/Logs/bitsrun.log
+```
 
 ## 可用命令
 
