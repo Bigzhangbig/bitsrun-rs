@@ -39,6 +39,7 @@ async fn main() {
 }
 
 async fn cli() -> Result<()> {
+    pretty_env_logger::init();
     // disable ansi colors on non-supported windows terminals
     if enable_ansi_support().is_err() {
         owo_colors::set_override(false);

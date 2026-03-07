@@ -74,7 +74,7 @@ mod macos {
             let mut changed = false;
             for idx in &upd.diff.added {
                 if let Some(iface) = upd.interfaces.get(idx) {
-                    if iface.name.starts_with("en") {
+                    if iface.name.starts_with("en") || iface.name.starts_with("eth") || iface.name.starts_with("wl") {
                         info!("[Monitor] Interface added: {}", iface.name);
                         changed = true;
                     }
@@ -82,7 +82,7 @@ mod macos {
             }
             for (idx, diff) in &upd.diff.modified {
                 if let Some(iface) = upd.interfaces.get(idx) {
-                    if iface.name.starts_with("en")
+                    if (iface.name.starts_with("en") || iface.name.starts_with("eth") || iface.name.starts_with("wl"))
                         && (!diff.addrs_added.is_empty() || !diff.addrs_removed.is_empty())
                     {
                         info!("[Monitor] Interface modified: {}", iface.name);
