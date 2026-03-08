@@ -65,6 +65,13 @@ jobs:
           VERSION=$(grep '^version =' Cargo.toml | head -1 | cut -d '"' -f 2)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Remove mirror configuration for CI
+        shell: bash
+        run: |
+          if [ -f .cargo/config.toml ]; then
+            sed -i '/\[source.crates-io\]/,/registry = .*/d' .cargo/config.toml
+          fi
+
       - name: Set up Ubuntu multiarch
         if: startsWith(matrix.os, 'ubuntu') && matrix.target-apt-arch != 'amd64'
         run: |
@@ -93,6 +100,12 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           target: ${{ env.CARGO_BUILD_TARGET }}
+
+      - name: Install dependencies (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libdbus-1-dev pkg-config
 
       - name: Build binaries
         run: cargo build --release --target=${{ env.CARGO_BUILD_TARGET }}
