@@ -69,7 +69,7 @@ jobs:
         shell: bash
         run: |
           if [ -f .cargo/config.toml ]; then
-            sed -i '/\[source.crates-io\]/,/registry = .*/d' .cargo/config.toml
+            sed '/\[source.crates-io\]/,/registry = .*/d' .cargo/config.toml > .cargo/config.toml.tmp && mv .cargo/config.toml.tmp .cargo/config.toml
           fi
 
       - name: Set up Ubuntu multiarch
