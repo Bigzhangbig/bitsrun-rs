@@ -19,6 +19,12 @@ jobs:
         with:
           components: clippy, rustfmt
 
+      - name: Remove mirror configuration for CI
+        run: |
+          if [ -f .cargo/config.toml ]; then
+            sed -i '/\[source.crates-io\]/,/registry = .*/d' .cargo/config.toml
+          fi
+
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
 
