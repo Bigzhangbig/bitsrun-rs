@@ -286,15 +286,16 @@ impl SrunClient {
                 .build()
                 .unwrap_or_default()
         });
-        
+
         // Use a 1s timeout for initial discovery to allow for multiple micro-retries or slow responses
         let ac_id = tokio::time::timeout(Duration::from_secs(1), get_acid(&http_client))
             .await
             .context("Discovery timeout (ac_id)")??;
-            
-        let login_state = tokio::time::timeout(Duration::from_secs(1), get_login_state(&http_client, false))
-            .await
-            .context("Discovery timeout (login_state)")??;
+
+        let login_state =
+            tokio::time::timeout(Duration::from_secs(1), get_login_state(&http_client, false))
+                .await
+                .context("Discovery timeout (login_state)")??;
 
         let ip = ip.unwrap_or(login_state.online_ip);
         let dm = dm.unwrap_or(false);
@@ -521,7 +522,10 @@ impl SrunClient {
                 );
             }
             Err(e) => {
-                info!("Network unreachable ({}), waiting for interface to be ready...", e);
+                info!(
+                    "Network unreachable ({}), waiting for interface to be ready...",
+                    e
+                );
                 tokio::time::sleep(Duration::from_millis(500)).await;
             }
         }

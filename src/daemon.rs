@@ -68,7 +68,7 @@ impl SrunDaemon {
                 event = hardware_events.recv() => {
                     if let Some(HardwareEvent::Refresh) = event {
                         info!("Hardware event received, refreshing client context...");
-                        
+
                         // Re-create the http_client to clear all connection pools/cache
                         let new_http_client = reqwest::Client::builder()
                             .no_proxy()
@@ -76,7 +76,7 @@ impl SrunDaemon {
                             .timeout(Duration::from_millis(400))
                             .build()
                             .unwrap_or(http_client.clone());
-                        
+
                         // Re-instantiate srun client to pick up the most accurate IP and ac_id for the current interface
                         match SrunClient::new(
                             daemon.username.clone(),
