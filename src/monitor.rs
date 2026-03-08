@@ -1,5 +1,5 @@
-use tokio::sync::mpsc;
 use log::info;
+use tokio::sync::mpsc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HardwareEvent {
@@ -99,10 +99,10 @@ mod macos {
 #[cfg(target_os = "linux")]
 mod linux {
     use super::HardwareEvent;
+    use futures_util::stream::StreamExt;
     use log::{info, warn};
     use tokio::sync::mpsc;
     use zbus::{proxy, Connection};
-    use futures_util::stream::StreamExt;
 
     #[proxy(
         interface = "org.freedesktop.NetworkManager",
@@ -136,34 +136,39 @@ mod linux {
 
                     match (nm_proxy, login_proxy) {
                         (Ok(nm), Ok(login)) => {
-                            info!("[Monitor] Linux D-Bus monitor started (NetworkManager & logind)");
+                            info!(
+                                "[Monitor] Linux D-Bus monitor started (NetworkManager & logind)"
+                            );
                             let mut connectivity_updates = nm.receive_connectivity_changed().await;
-                            let mut active_conn_updates = nm.receive_active_connections_changed().await;
-                            let mut sleep_updates = login.receive_prepare_for_sleep().await.expect("Failed to listen to sleep signals");
+                            let mut active_conn_updates =
+                                nm.receive_active_connections_changed().await;
+                            let mut sleep_updates = login
+                                .receive_prepare_for_sleep()
+                                .await
+                                .expect("Failed to listen to sleep signals");
 
                             loop {
-                            tokio::select! {
-                                Some(update) = connectivity_updates.next() => {
-                                    if let Ok(val) = update.get().await {
-                                        info!("[Monitor] Connectivity changed: {}", val);
+                                tokio::select! {
+                                    Some(update) = connectivity_updates.next() => {
+                                        if let Ok(val) = update.get().await {
+                                            info!("[Monitor] Connectivity changed: {}", val);
+                                            let _ = tx.try_send(HardwareEvent::Refresh);
+                                        }
+                                    }
+                                    Some(_) = active_conn_updates.next() => {
+                                        info!("[Monitor] Active connections changed (Roaming/SSID switch)");
                                         let _ = tx.try_send(HardwareEvent::Refresh);
                                     }
-                                }
-                                Some(_) = active_conn_updates.next() => {
-                                    info!("[Monitor] Active connections changed (Roaming/SSID switch)");
-                                    let _ = tx.try_send(HardwareEvent::Refresh);
-                                }
-                                Some(signal) = sleep_updates.next() => {
-                                    if let Ok(args) = signal.args() {
-                                        if !args.active {
-                                            info!("[Monitor] System wake detected from logind");
-                                            let _ = tx.try_send(HardwareEvent::Refresh);
+                                    Some(signal) = sleep_updates.next() => {
+                                        if let Ok(args) = signal.args() {
+                                            if !args.active {
+                                                info!("[Monitor] System wake detected from logind");
+                                                let _ = tx.try_send(HardwareEvent::Refresh);
+                                            }
                                         }
                                     }
                                 }
                             }
-                            }
-
                         }
                         _ => warn!("[Monitor] Failed to create D-Bus proxies"),
                     }
@@ -184,8 +189,10 @@ pub fn start_hardware_monitor() -> mpsc::Receiver<HardwareEvent> {
         // Focus on added interfaces that already have IP addresses
         for idx in &upd.diff.added {
             if let Some(iface) = upd.interfaces.get(idx) {
-                if (iface.name.starts_with("en") || iface.name.starts_with("eth") || iface.name.starts_with("wl")) 
-                    && !iface.ips.is_empty() 
+                if (iface.name.starts_with("en")
+                    || iface.name.starts_with("eth")
+                    || iface.name.starts_with("wl"))
+                    && !iface.ips.is_empty()
                 {
                     info!("[Monitor] New interface with IP detected: {}", iface.name);
                     changed = true;
@@ -195,11 +202,13 @@ pub fn start_hardware_monitor() -> mpsc::Receiver<HardwareEvent> {
         // Precision monitoring for IP address changes on existing interfaces
         for (idx, diff) in &upd.diff.modified {
             if let Some(iface) = upd.interfaces.get(idx) {
-                if iface.name.starts_with("en") || iface.name.starts_with("eth") || iface.name.starts_with("wl") {
-                    if !diff.addrs_added.is_empty() || !diff.addrs_removed.is_empty() {
-                        info!("[Monitor] IP address changed on interface: {}", iface.name);
-                        changed = true;
-                    }
+                if (iface.name.starts_with("en")
+                    || iface.name.starts_with("eth")
+                    || iface.name.starts_with("wl"))
+                    && (!diff.addrs_added.is_empty() || !diff.addrs_removed.is_empty())
+                {
+                    info!("[Monitor] IP address changed on interface: {}", iface.name);
+                    changed = true;
                 }
             }
         }

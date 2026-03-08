@@ -9,10 +9,10 @@ use owo_colors::Stream::Stdout;
 use bitsrun::cli;
 use bitsrun::client;
 use bitsrun::daemon;
-use bitsrun::user;
 use bitsrun::tables;
+use bitsrun::user;
 
-use cli::{Arguments, Commands, ClientArgs, StatusArgs};
+use cli::{Arguments, ClientArgs, Commands, StatusArgs};
 use client::{get_login_state, SrunClient};
 use daemon::SrunDaemon;
 use tables::{print_config_paths, print_login_state};
