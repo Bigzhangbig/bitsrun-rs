@@ -39,6 +39,13 @@ async fn main() {
 }
 
 async fn cli() -> Result<()> {
+    if std::env::var("RUST_LOG").is_err() {
+        if cfg!(debug_assertions) {
+            std::env::set_var("RUST_LOG", "debug");
+        } else {
+            std::env::set_var("RUST_LOG", "info");
+        }
+    }
     pretty_env_logger::init();
     // disable ansi colors on non-supported windows terminals
     if enable_ansi_support().is_err() {
@@ -47,8 +54,12 @@ async fn cli() -> Result<()> {
 
     let args = Arguments::parse();
 
-    // reusable http client
-    let http_client = reqwest::Client::new();
+    // reusable http client without proxy and with timeout
+    let http_client = reqwest::Client::builder()
+        .no_proxy()
+        .connect_timeout(std::time::Duration::from_secs(3))
+        .timeout(std::time::Duration::from_secs(5))
+        .build()?;
 
     // commands
     match &args.command {
