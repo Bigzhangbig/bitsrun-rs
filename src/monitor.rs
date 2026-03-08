@@ -1,4 +1,5 @@
 use tokio::sync::mpsc;
+use log::info;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HardwareEvent {
@@ -67,35 +68,7 @@ mod macos {
         }
     }
 
-    pub fn start_monitor(tx: mpsc::Sender<HardwareEvent>) {
-        let tx_net = tx.clone();
-        // Network Monitor
-        let _ = netwatcher::watch_interfaces(move |upd| {
-            let mut changed = false;
-            for idx in &upd.diff.added {
-                if let Some(iface) = upd.interfaces.get(idx) {
-                    if iface.name.starts_with("en") || iface.name.starts_with("eth") || iface.name.starts_with("wl") {
-                        info!("[Monitor] Interface added: {}", iface.name);
-                        changed = true;
-                    }
-                }
-            }
-            for (idx, diff) in &upd.diff.modified {
-                if let Some(iface) = upd.interfaces.get(idx) {
-                    if (iface.name.starts_with("en") || iface.name.starts_with("eth") || iface.name.starts_with("wl"))
-                        && (!diff.addrs_added.is_empty() || !diff.addrs_removed.is_empty())
-                    {
-                        info!("[Monitor] Interface modified: {}", iface.name);
-                        changed = true;
-                    }
-                }
-            }
-            if changed {
-                let _ = tx_net.try_send(HardwareEvent::Refresh);
-            }
-        })
-        .map(|h| Box::leak(Box::new(h)));
-
+    pub fn start_lid_monitor(tx: mpsc::Sender<HardwareEvent>) {
         // Lid Monitor
         thread::spawn(move || unsafe {
             let mut port: *mut c_void = ptr::null_mut();
@@ -123,9 +96,124 @@ mod macos {
     }
 }
 
+#[cfg(target_os = "linux")]
+mod linux {
+    use super::HardwareEvent;
+    use log::{info, warn};
+    use tokio::sync::mpsc;
+    use zbus::{proxy, Connection};
+    use futures_util::stream::StreamExt;
+
+    #[proxy(
+        interface = "org.freedesktop.NetworkManager",
+        default_service = "org.freedesktop.NetworkManager",
+        default_path = "/org/freedesktop/NetworkManager"
+    )]
+    trait NetworkManager {
+        #[zbus(property)]
+        fn connectivity(&self) -> zbus::Result<u32>;
+
+        #[zbus(property)]
+        fn active_connections(&self) -> zbus::Result<Vec<zbus::zvariant::OwnedObjectPath>>;
+    }
+
+    #[proxy(
+        interface = "org.freedesktop.login1.Manager",
+        default_service = "org.freedesktop.login1",
+        default_path = "/org/freedesktop/login1"
+    )]
+    trait LogindManager {
+        #[zbus(signal)]
+        fn prepare_for_sleep(&self, active: bool) -> zbus::Result<()>;
+    }
+
+    pub fn start_linux_monitor(tx: mpsc::Sender<HardwareEvent>) {
+        tokio::spawn(async move {
+            match Connection::system().await {
+                Ok(conn) => {
+                    let nm_proxy = NetworkManagerProxy::new(&conn).await;
+                    let login_proxy = LogindManagerProxy::new(&conn).await;
+
+                    match (nm_proxy, login_proxy) {
+                        (Ok(nm), Ok(login)) => {
+                            info!("[Monitor] Linux D-Bus monitor started (NetworkManager & logind)");
+                            let mut connectivity_updates = nm.receive_connectivity_changed().await;
+                            let mut active_conn_updates = nm.receive_active_connections_changed().await;
+                            let mut sleep_updates = login.receive_prepare_for_sleep().await.expect("Failed to listen to sleep signals");
+
+                            loop {
+                            tokio::select! {
+                                Some(update) = connectivity_updates.next() => {
+                                    if let Ok(val) = update.get().await {
+                                        info!("[Monitor] Connectivity changed: {}", val);
+                                        let _ = tx.try_send(HardwareEvent::Refresh);
+                                    }
+                                }
+                                Some(_) = active_conn_updates.next() => {
+                                    info!("[Monitor] Active connections changed (Roaming/SSID switch)");
+                                    let _ = tx.try_send(HardwareEvent::Refresh);
+                                }
+                                Some(signal) = sleep_updates.next() => {
+                                    if let Ok(args) = signal.args() {
+                                        if !args.active {
+                                            info!("[Monitor] System wake detected from logind");
+                                            let _ = tx.try_send(HardwareEvent::Refresh);
+                                        }
+                                    }
+                                }
+                            }
+                            }
+
+                        }
+                        _ => warn!("[Monitor] Failed to create D-Bus proxies"),
+                    }
+                }
+                Err(e) => warn!("[Monitor] Failed to connect to system D-Bus: {}", e),
+            }
+        });
+    }
+}
+
 pub fn start_hardware_monitor() -> mpsc::Receiver<HardwareEvent> {
     let (tx, rx) = mpsc::channel(10);
+
+    let tx_net = tx.clone();
+    // Network Monitor (Cross-platform via netwatcher)
+    let _ = netwatcher::watch_interfaces(move |upd| {
+        let mut changed = false;
+        // Focus on added interfaces that already have IP addresses
+        for idx in &upd.diff.added {
+            if let Some(iface) = upd.interfaces.get(idx) {
+                if (iface.name.starts_with("en") || iface.name.starts_with("eth") || iface.name.starts_with("wl")) 
+                    && !iface.ips.is_empty() 
+                {
+                    info!("[Monitor] New interface with IP detected: {}", iface.name);
+                    changed = true;
+                }
+            }
+        }
+        // Precision monitoring for IP address changes on existing interfaces
+        for (idx, diff) in &upd.diff.modified {
+            if let Some(iface) = upd.interfaces.get(idx) {
+                if iface.name.starts_with("en") || iface.name.starts_with("eth") || iface.name.starts_with("wl") {
+                    if !diff.addrs_added.is_empty() || !diff.addrs_removed.is_empty() {
+                        info!("[Monitor] IP address changed on interface: {}", iface.name);
+                        changed = true;
+                    }
+                }
+            }
+        }
+        if changed {
+            let _ = tx_net.try_send(HardwareEvent::Refresh);
+        }
+    })
+    .map(|h| Box::leak(Box::new(h)));
+
     #[cfg(target_os = "macos")]
-    macos::start_monitor(tx);
+    macos::start_lid_monitor(tx);
+
+    #[cfg(target_os = "linux")]
+    linux::start_linux_monitor(tx);
+
     rx
 }

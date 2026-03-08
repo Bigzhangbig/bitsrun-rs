@@ -12,10 +12,13 @@ English  |  [简体中文](README_zh.md)
 
 This fork (`Bigzhangbig/bitsrun-rs`) introduces several enhancements over the original project, **developed with the assistance of Gemini CLI (AI)**:
 
-- **🚀 Native macOS Wi-Fi Monitoring**: On macOS, the `keep-alive` daemon now utilizes the `SystemConfiguration` and `IOKit` frameworks to monitor network changes and system power events in real-time.
-  - **Instant Re-login**: Automatically triggers a login attempt the moment you connect to a new Wi-Fi network or wake your Mac from sleep.
-  - **Roaming Support**: Detects physical AP switching (BSSID change) even if the SSID remains the same (e.g., moving between buildings with `BIT-Web`), ensuring your session stays active without waiting for the polling interval.
-  - **Zero-Latency & Low Power**: Uses event-driven system callbacks instead of constant polling.
+- **🚀 Native macOS & Linux Network Monitoring**: The `keep-alive` daemon now monitors network changes and system events in real-time to trigger instant re-authentication.
+  - **macOS**: Utilizes `SystemConfiguration` and `IOKit` for network and system power events (wake/lid open).
+  - **Linux**: Multi-layered monitoring for maximum reliability:
+    - **High-level (D-Bus)**: Uses [**zbus**](https://github.com/dbus2/zbus) to listen for **NetworkManager** signals (WiFi roaming, SSID/BSSID switching) and **logind** signals (system sleep/wake events).
+    - **Low-level (Netlink)**: Uses [**netwatcher**](https://github.com/n0-computer/netwatch) (based on `rtnetlink`) to capture kernel-level interface and address changes, ensuring compatibility even without NetworkManager.
+  - **Instant Re-login**: Automatically triggers a login attempt the moment you connect to a new Wi-Fi, switch access points, or wake your device from sleep.
+  - **Zero-Latency**: Uses event-driven system callbacks instead of constant polling.
 - **🛡️ Robust Protocol Alignment**: Improved IP detection and auto-correction. If the gateway's detected IP differs from the local one, the client automatically aligns and re-authenticates to ensure success.
 
 ![CleanShot 2023-12-04 at 16 47 26@2x](https://github.com/spencerwooo/bitsrun-rs/assets/32114380/23343ba1-961c-41aa-b4b6-c09da93fb699)

@@ -278,9 +278,24 @@ impl SrunClient {
         ip: Option<IpAddr>,
         dm: Option<bool>,
     ) -> Result<SrunClient> {
-        let http_client = http_client.unwrap_or_default();
-        let ac_id = get_acid(&http_client).await?;
-        let login_state = get_login_state(&http_client, false).await?;
+        let http_client = http_client.unwrap_or_else(|| {
+            Client::builder()
+                .no_proxy()
+                .connect_timeout(Duration::from_secs(3))
+                .timeout(Duration::from_secs(5))
+                .build()
+                .unwrap_or_default()
+        });
+        
+        // Use a small timeout for initial discovery to avoid hanging the daemon
+        let ac_id = tokio::time::timeout(Duration::from_secs(3), get_acid(&http_client))
+            .await
+            .context("Discovery timeout (ac_id)")??;
+            
+        let login_state = tokio::time::timeout(Duration::from_secs(3), get_login_state(&http_client, false))
+            .await
+            .context("Discovery timeout (login_state)")??;
+
         let ip = ip.unwrap_or(login_state.online_ip);
         let dm = dm.unwrap_or(false);
         Ok(SrunClient {
@@ -505,8 +520,9 @@ impl SrunClient {
                     ac_id
                 );
             }
-            Err(_) => {
-                info!("Network unreachable, waiting for interface to be ready...");
+            Err(e) => {
+                info!("Network unreachable ({}), waiting for interface to be ready...", e);
+                tokio::time::sleep(Duration::from_millis(2000)).await;
             }
         }
 
@@ -514,7 +530,7 @@ impl SrunClient {
         for i in 1..=5 {
             match self.login(true, false).await {
                 Ok(resp) if resp.error == "ok" || resp.error == "ip_already_online_error" => {
-                    tokio::time::sleep(Duration::from_millis(1000)).await;
+                    tokio::time::sleep(Duration::from_millis(1500)).await;
                     if check_connectivity(&self.http_client).await.is_ok() {
                         info!("Smart login success (attempt {}).", i);
                         return Ok(());
@@ -524,7 +540,7 @@ impl SrunClient {
                     debug!("Login attempt {} failed, retrying...", i);
                 }
             }
-            tokio::time::sleep(Duration::from_millis(1500)).await;
+            tokio::time::sleep(Duration::from_millis(2000)).await;
         }
         bail!("Failed to ensure online after multiple attempts")
     }

@@ -12,10 +12,13 @@
 
 本分支 (`Bigzhangbig/bitsrun-rs`) 在原项目基础上引入了多项增强功能，**由 Gemini CLI (AI) 辅助开发完成**：
 
-- **🚀 原生 macOS Wi-Fi 监控**：在 macOS 上，`keep-alive` 守护进程利用 `SystemConfiguration` 和 `IOKit` 框架实时监控网络变化和系统电源事件。
-  - **即时重连**：在连接到新 Wi-Fi 或从休眠中唤醒后，立即自动触发登录尝试。
-  - **漫游支持**：即使 SSID 相同（如在不同教学楼间移动），也能探测到物理 AP 的切换（BSSID 变更），确保会话持续活跃而无需等待轮询间隔。
-  - **零延迟与低功耗**：使用系统事件回调而非恒定的定时轮询。
+- **🚀 原生 macOS & Linux 网络监控**：`keep-alive` 守护进程现在支持实时监控网络变化和系统事件，以触发即时重新认证。
+  - **macOS**：利用 `SystemConfiguration` 和 `IOKit` 框架监控网络和系统电源事件（唤醒/开盖）。
+  - **Linux**：采用多层监控体系以确保最大可靠性：
+    - **高级 (D-Bus)**：利用 [**zbus**](https://github.com/dbus2/zbus) 监听 **NetworkManager** 信号（实现 WiFi 漫游、SSID/BSSID 切换感知）以及 **logind** 信号（实现系统休眠/唤醒感知）。
+    - **底层 (Netlink)**：利用 [**netwatcher**](https://github.com/n0-computer/netwatch)（基于 `rtnetlink`）捕获内核级的网络接口和地址变更，确保在没有 NetworkManager 的环境下依然可用。
+  - **即时重连**：在连接到新 Wi-Fi、切换接入点或从休眠中唤醒后，立即自动触发登录尝试。
+  - **零延迟**：使用系统事件回调而非恒定的定时轮询。
 - **🛡️ 健壮的协议对齐**：改进了 IP 探测与自动校正逻辑。如果网关探测到的 IP 与本地不一致，客户端会自动对齐并重新认证，确保登录成功。
 
 ![CleanShot 2023-12-04 at 16 47 26@2x](https://github.com/spencerwooo/bitsrun-rs/assets/32114380/23343ba1-961c-41aa-b4b6-c09da93fb699)
