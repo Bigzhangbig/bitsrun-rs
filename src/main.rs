@@ -1,29 +1,21 @@
-mod cli;
-mod client;
-mod config;
-mod daemon;
-mod monitor;
-mod tables;
-mod user;
-mod xencode;
-
 use anyhow::Context;
 use anyhow::Result;
 use clap::Parser;
-use cli::ClientArgs;
-use cli::StatusArgs;
 use enable_ansi_support::enable_ansi_support;
 use owo_colors::OwoColorize;
 use owo_colors::Stream::Stderr;
 use owo_colors::Stream::Stdout;
 
-use cli::Arguments;
-use cli::Commands;
-use client::get_login_state;
-use client::SrunClient;
+use bitsrun::cli;
+use bitsrun::client;
+use bitsrun::daemon;
+use bitsrun::user;
+use bitsrun::tables;
+
+use cli::{Arguments, Commands, ClientArgs, StatusArgs};
+use client::{get_login_state, SrunClient};
 use daemon::SrunDaemon;
-use tables::print_config_paths;
-use tables::print_login_state;
+use tables::{print_config_paths, print_login_state};
 
 #[tokio::main]
 async fn main() {
@@ -57,8 +49,8 @@ async fn cli() -> Result<()> {
     // reusable http client without proxy and with timeout
     let http_client = reqwest::Client::builder()
         .no_proxy()
-        .connect_timeout(std::time::Duration::from_secs(3))
-        .timeout(std::time::Duration::from_secs(5))
+        .connect_timeout(std::time::Duration::from_millis(400))
+        .timeout(std::time::Duration::from_millis(400))
         .build()?;
 
     // commands

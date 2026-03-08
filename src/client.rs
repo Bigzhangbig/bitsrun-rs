@@ -281,18 +281,18 @@ impl SrunClient {
         let http_client = http_client.unwrap_or_else(|| {
             Client::builder()
                 .no_proxy()
-                .connect_timeout(Duration::from_secs(3))
-                .timeout(Duration::from_secs(5))
+                .connect_timeout(Duration::from_millis(400))
+                .timeout(Duration::from_millis(400))
                 .build()
                 .unwrap_or_default()
         });
         
-        // Use a small timeout for initial discovery to avoid hanging the daemon
-        let ac_id = tokio::time::timeout(Duration::from_secs(3), get_acid(&http_client))
+        // Use a 1s timeout for initial discovery to allow for multiple micro-retries or slow responses
+        let ac_id = tokio::time::timeout(Duration::from_secs(1), get_acid(&http_client))
             .await
             .context("Discovery timeout (ac_id)")??;
             
-        let login_state = tokio::time::timeout(Duration::from_secs(3), get_login_state(&http_client, false))
+        let login_state = tokio::time::timeout(Duration::from_secs(1), get_login_state(&http_client, false))
             .await
             .context("Discovery timeout (login_state)")??;
 
@@ -522,27 +522,27 @@ impl SrunClient {
             }
             Err(e) => {
                 info!("Network unreachable ({}), waiting for interface to be ready...", e);
-                tokio::time::sleep(Duration::from_millis(2000)).await;
+                tokio::time::sleep(Duration::from_millis(500)).await;
             }
         }
 
-        // Attempt login with up to 5 retries for rapid recovery
-        for i in 1..=5 {
+        // Attempt login retries every 0.5s for 5s total
+        for i in 1..=10 {
             match self.login(true, false).await {
                 Ok(resp) if resp.error == "ok" || resp.error == "ip_already_online_error" => {
-                    tokio::time::sleep(Duration::from_millis(1500)).await;
+                    tokio::time::sleep(Duration::from_millis(500)).await;
                     if check_connectivity(&self.http_client).await.is_ok() {
                         info!("Smart login success (attempt {}).", i);
                         return Ok(());
                     }
                 }
                 _ => {
-                    debug!("Login attempt {} failed, retrying...", i);
+                    debug!("Login attempt {} failed, retrying in 500ms...", i);
                 }
             }
-            tokio::time::sleep(Duration::from_millis(2000)).await;
+            tokio::time::sleep(Duration::from_millis(500)).await;
         }
-        bail!("Failed to ensure online after multiple attempts")
+        bail!("Failed to ensure online after 10 attempts (5s)")
     }
 
     async fn get_challenge(&self, _verbose: bool) -> Result<(String, IpAddr)> {
