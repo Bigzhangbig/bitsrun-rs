@@ -46,12 +46,11 @@ async fn cli() -> Result<()> {
         .format(|buf, record| {
             let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
             let level = record.level();
-            let level_style = buf.default_level_style(level);
             writeln!(
                 buf,
                 "[{} {} {}] {}",
                 timestamp,
-                level_style.value(level),
+                level,
                 record.target(),
                 record.args()
             )
