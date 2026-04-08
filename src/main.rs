@@ -1,5 +1,8 @@
+use std::io::Write;
+
 use anyhow::Context;
 use anyhow::Result;
+use chrono::Local;
 use clap::Parser;
 use enable_ansi_support::enable_ansi_support;
 use owo_colors::OwoColorize;
@@ -38,7 +41,22 @@ async fn cli() -> Result<()> {
             std::env::set_var("RUST_LOG", "info");
         }
     }
-    pretty_env_logger::init();
+    // Initialize logger with custom format including timestamp
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+        .format(|buf, record| {
+            let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
+            let level = record.level();
+            let level_style = buf.default_level_style(level);
+            writeln!(
+                buf,
+                "[{} {} {}] {}",
+                timestamp,
+                level_style.value(level),
+                record.target(),
+                record.args()
+            )
+        })
+        .init();
 
     // disable ansi colors on non-supported windows terminals
     if enable_ansi_support().is_err() {

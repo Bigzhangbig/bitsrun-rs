@@ -37,7 +37,7 @@ humansize = "2.1"
 chrono-humanize = "0.2"
 chrono = "0.4"
 log = "0.4"
-pretty_env_logger = "0.5"
+env_logger = { version = "0.11", default-features = false, features = ["auto-color", "humantime"] }
 enable-ansi-support = "0.2"
 netwatcher = "0.4.1"
 
