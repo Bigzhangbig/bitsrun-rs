@@ -26,7 +26,7 @@ impl SrunDaemon {
         let daemon_cfg_str = fs::read_to_string(&finalized_cfg).with_context(|| {
             format!(
                 "failed to read config file `{}`",
-                &finalized_cfg.if_supports_color(Stdout, |t: &String| t.underline())
+                finalized_cfg.if_supports_color(Stdout, |t: &String| t.underline())
             )
         })?;
 
@@ -62,12 +62,16 @@ impl SrunDaemon {
         loop {
             tokio::select! {
                 _ = srun_ticker.tick() => {
+                    if !crate::client::is_on_campus(&http_client).await {
+                        debug!("Not on campus, skipping keep-alive tick.");
+                        continue;
+                    }
                     debug!("Scheduled keep-alive check...");
                     let _ = srun.ensure_online().await;
                 }
                 event = hardware_events.recv() => {
                     if let Some(HardwareEvent::Refresh) = event {
-                        info!("Hardware event received, refreshing client context...");
+                        info!("Hardware event received, checking network...");
 
                         // Re-create the http_client to clear all connection pools/cache
                         let new_http_client = reqwest::Client::builder()
@@ -77,6 +81,12 @@ impl SrunDaemon {
                             .build()
                             .unwrap_or(http_client.clone());
 
+                        if !crate::client::is_on_campus(&new_http_client).await {
+                            debug!("Not on campus after hardware event, skipping refresh.");
+                            continue;
+                        }
+
+                        info!("On campus, refreshing client context...");
                         // Re-instantiate srun client to pick up the most accurate IP and ac_id for the current interface
                         match SrunClient::new(
                             daemon.username.clone(),

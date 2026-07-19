@@ -201,6 +201,19 @@ pub(crate) async fn check_connectivity(client: &Client) -> Result<Option<String>
     Ok(Some("43".to_string()))
 }
 
+/// Cheap probe: is the SRUN gateway reachable? Off-campus → false.
+pub async fn is_on_campus(client: &Client) -> bool {
+    let url = format!("{}/cgi-bin/rad_user_info", SRUN_PORTAL);
+    matches!(
+        tokio::time::timeout(
+            Duration::from_millis(400),
+            client.get(&url).query(&[("callback", "jsonp")]).send(),
+        )
+        .await,
+        Ok(Ok(_))
+    )
+}
+
 /// Get the ac_id of the current device
 async fn get_acid(client: &Client) -> Result<String> {
     // Try to visit `CAPTIVE_PORTAL_TEST`.
@@ -346,14 +359,7 @@ impl SrunClient {
         let chksum = {
             let chk = format!(
                 "{0}{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}{0}{7}",
-                &token,
-                &self.username,
-                &hmd5,
-                &self.ac_id,
-                &real_ip_str,
-                &SRUN_N,
-                &SRUN_TYPE,
-                &info
+                token, self.username, hmd5, self.ac_id, real_ip_str, SRUN_N, SRUN_TYPE, info
             );
             let mut hasher = Sha1::new();
             hasher.update(chk);

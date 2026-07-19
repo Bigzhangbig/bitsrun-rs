@@ -42,14 +42,14 @@ fn parse_bit_user_config(config_path: &Option<String>) -> Result<BitUserPartial>
     let user_str_from_file = fs::read_to_string(&config).with_context(|| {
         format!(
             "failed to read config file `{}`",
-            &config.if_supports_color(Stdout, |t| t.underline())
+            config.if_supports_color(Stdout, |t| t.underline())
         )
     })?;
     let user_from_file =
         serde_json::from_str::<BitUserPartial>(&user_str_from_file).with_context(|| {
             format!(
                 "failed to parse config file `{}`",
-                &config.if_supports_color(Stdout, |t| t.underline())
+                config.if_supports_color(Stdout, |t| t.underline())
             )
         })?;
     Ok(user_from_file)

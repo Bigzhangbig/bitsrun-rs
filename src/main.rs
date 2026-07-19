@@ -143,7 +143,7 @@ async fn srun_status(
             println!(
                 "{} {} {} is online",
                 "bitsrun:".if_supports_color(Stdout, |t| t.bright_green()),
-                &login_state
+                login_state
                     .online_ip
                     .to_string()
                     .if_supports_color(Stdout, |t| t.underline()),
